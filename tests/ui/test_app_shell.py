@@ -14,11 +14,6 @@ pytestmark = pytest.mark.ui
 
 
 @pytest.fixture
-def theme_service(qapp):
-    return ThemeService(qapp)
-
-
-@pytest.fixture
 def main_window(container: AppContainer, theme_service: ThemeService):
     theme_service.apply(container.settings_service.get().theme)
     window = MainWindow(container, theme_service)
@@ -51,8 +46,15 @@ class TestMainWindow:
         assert main_window.stack.currentWidget() is main_window._pages["network"]
 
     def test_placeholder_pages_are_labeled_honestly(self, main_window: MainWindow):
-        planned = main_window._pages["dashboard"].planned_label.text()
+        planned = main_window._pages["network"].planned_label.text()
         assert "Planned for" in planned
+
+    def test_dashboard_and_system_are_real_views(self, main_window: MainWindow):
+        from app.ui.views.dashboard_view import DashboardView
+        from app.ui.views.system_view import SystemView
+
+        assert isinstance(main_window._pages["dashboard"], DashboardView)
+        assert isinstance(main_window._pages["system"], SystemView)
 
     def test_theme_toggle_changes_stylesheet(self, main_window: MainWindow, qtbot):
         signal = main_window._theme.themeChanged

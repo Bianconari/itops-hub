@@ -22,6 +22,13 @@ def tmp_paths(tmp_path):
 
 
 @pytest.fixture
+def theme_service(qapp):
+    from app.ui.theme.theme_service import ThemeService
+
+    return ThemeService(qapp)
+
+
+@pytest.fixture
 def container(tmp_paths):
     """Fully wired application core on an isolated database."""
     app_container = AppContainer.build(paths=tmp_paths, console=False)
