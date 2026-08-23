@@ -1,0 +1,38 @@
+# PyInstaller version metadata for ITOpsHub.exe (Windows file properties)
+# UTF-8
+#
+# Translated from scripts/version_info.template — keep in sync with
+# app/__version__ and pyproject.toml on every release.
+
+VSVersionInfo(
+    ffi=FixedFileInfo(
+        filevers=(1, 5, 1, 0),
+        prodvers=(1, 5, 1, 0),
+        mask=0x3F,
+        flags=0x0,
+        OS=0x40004,
+        fileType=0x1,
+        subtype=0x0,
+        date=(0, 0),
+    ),
+    kids=[
+        StringFileInfo(
+            [
+                StringTable(
+                    "040904B0",
+                    [
+                        StringStruct("CompanyName", "ITOps Hub Contributors"),
+                        StringStruct("FileDescription", "ITOps Hub — desktop IT operations platform"),
+                        StringStruct("FileVersion", "1.5.1"),
+                        StringStruct("InternalName", "ITOpsHub"),
+                        StringStruct("LegalCopyright", "© 2026 ITOps Hub Contributors — MIT License"),
+                        StringStruct("OriginalFilename", "ITOpsHub.exe"),
+                        StringStruct("ProductName", "ITOps Hub"),
+                        StringStruct("ProductVersion", "1.5.1"),
+                    ],
+                )
+            ]
+        ),
+        VarFileInfo([VarStruct("Translation", [1033, 1200])]),
+    ],
+)

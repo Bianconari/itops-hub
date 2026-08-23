@@ -52,9 +52,8 @@ exe = EXE(
     upx=False,
     console=False,
     disable_windowed_traceback=False,
-    icon="resources" + os.sep + "icons" + os.sep + "app.ico" if os.path.exists(
-        "resources" + os.sep + "icons" + os.sep + "app.ico"
-    ) else None,
+    icon=os.path.join("resources", "icons", "app.ico"),
+    version=os.path.join("scripts", "version_info.txt"),
 )
 
 coll = COLLECT(

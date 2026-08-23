@@ -41,6 +41,29 @@ jobs:
           choco install -y innosetup --no-progress
           iscc scripts/installer.iss
         shell: pwsh
+      - name: Installer smoke test (silent install -> run -> uninstall)
+        run: |
+          $setup = ".\dist\ITOpsHub-Setup.exe"
+          if (-not (Test-Path $setup)) { throw "installer not found" }
+          # 1) silent install (per-user, PrivilegesRequired=lowest)
+          $p = Start-Process $setup -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "install failed: $($p.ExitCode)" }
+          $exe = "$env:LOCALAPPDATA\Programs\ITOps Hub\ITOpsHub.exe"
+          if (-not (Test-Path $exe)) { throw "installed exe missing at $exe" }
+          Write-Host "installed: $exe"
+          # 2) installed exe passes selftest
+          $env:ITOPS_HUB_DATA_DIR = "D:\a\installed-selftest-data"
+          $sp = Start-Process $exe -ArgumentList "--selftest" -Wait -PassThru -NoNewWindow -RedirectStandardOutput "installed-selftest.txt"
+          Get-Content "installed-selftest.txt"
+          if ($sp.ExitCode -ne 0) { throw "installed selftest failed: $($sp.ExitCode)" }
+          # 3) uninstall silently and verify removal
+          $unins = "$env:LOCALAPPDATA\Programs\ITOps Hub\unins000.exe"
+          if (-not (Test-Path $unins)) { throw "uninstaller missing" }
+          $u = Start-Process $unins -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -PassThru
+          if ($u.ExitCode -ne 0) { throw "uninstall failed: $($u.ExitCode)" }
+          if (Test-Path $exe) { throw "exe still present after uninstall" }
+          Write-Host "install/uninstall smoke test PASSED"
+        shell: pwsh
       - name: Upload application artifact
         uses: actions/upload-artifact@v4
         with:
