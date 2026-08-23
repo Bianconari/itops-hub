@@ -89,6 +89,12 @@ class SettingsView(QWidget):
         self.spin_timeout.setSuffix(" ms")
         form.addRow(QLabel("Ping timeout (new devices)"), self.spin_timeout)
 
+        self.spin_snapshot = QSpinBox()
+        self.spin_snapshot.setObjectName("spin_snapshot")
+        self.spin_snapshot.setRange(5, 3600)
+        self.spin_snapshot.setSuffix(" s")
+        form.addRow(QLabel("System snapshot interval"), self.spin_snapshot)
+
         self.spin_retention = QSpinBox()
         self.spin_retention.setObjectName("spin_retention")
         self.spin_retention.setRange(1, 3650)
@@ -170,6 +176,7 @@ class SettingsView(QWidget):
             self.combo_log_level.setCurrentText(settings.log_level.value)
             self.spin_interval.setValue(settings.monitoring.interval_seconds)
             self.spin_timeout.setValue(settings.monitoring.timeout_ms)
+            self.spin_snapshot.setValue(settings.snapshots.interval_seconds)
             self.spin_retention.setValue(settings.retention_days)
             self.spin_disk_warning.setValue(int(settings.disk.warning_percent))
             self.spin_disk_critical.setValue(int(settings.disk.critical_percent))
@@ -195,6 +202,7 @@ class SettingsView(QWidget):
                 "interval_seconds": self.spin_interval.value(),
                 "timeout_ms": self.spin_timeout.value(),
             },
+            "snapshots": {"interval_seconds": self.spin_snapshot.value()},
             "retention_days": self.spin_retention.value(),
             "disk": {
                 "warning_percent": float(self.spin_disk_warning.value()),

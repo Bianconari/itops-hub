@@ -17,13 +17,15 @@ from app import __version__
 from app.application.container import AppContainer
 from app.ui.main_window.sidebar import Sidebar
 from app.ui.theme.theme_service import ThemeService
+from app.ui.views.dashboard_view import DashboardView
 from app.ui.views.placeholder_page import PlaceholderPage
 from app.ui.views.settings_view import SettingsView
+from app.ui.views.system_view import SystemView
 
 #: (page_id, nav title, planned version or None when implemented)
 _PAGES: list[tuple[str, str, str | None]] = [
-    ("dashboard", "Dashboard", "v0.4 (M3)"),
-    ("system", "System", "v0.4 (M3)"),
+    ("dashboard", "Dashboard", None),  # implemented (v0.4)
+    ("system", "System", None),  # implemented (v0.4)
     ("network", "Network", "v0.5 (M4)"),
     ("monitoring", "Monitoring", "v0.6 (M5)"),
     ("logs", "Logs", "v0.7 (M6)"),
@@ -34,14 +36,6 @@ _PAGES: list[tuple[str, str, str | None]] = [
 ]
 
 _PAGE_DESCRIPTIONS: dict[str, str] = {
-    "dashboard": (
-        "KPI cards (CPU / RAM / disk), live charts, operating system overview, "
-        "network status, recent alerts, and recent activity in one health view."
-    ),
-    "system": (
-        "Hostname, OS and version, CPU, RAM, storage, network adapters, local "
-        "IP addresses, uptime, and basic hardware information."
-    ),
     "network": (
         "Authorized-network CIDR scanning with validation, concurrent checks, "
         "progress and cancellation, hostname resolution, best-effort MAC lookup, "
@@ -100,10 +94,14 @@ class MainWindow(QMainWindow):
 
         self._pages: dict[str, QWidget] = {}
         for page_id, title, planned in _PAGES:
-            if planned is None:
-                page: QWidget = SettingsView(container)
+            if planned is not None:
+                page: QWidget = PlaceholderPage(title, planned, _PAGE_DESCRIPTIONS[page_id])
+            elif page_id == "dashboard":
+                page = DashboardView(container, theme_service)
+            elif page_id == "system":
+                page = SystemView(container, theme_service)
             else:
-                page = PlaceholderPage(title, planned, _PAGE_DESCRIPTIONS[page_id])
+                page = SettingsView(container)
             self._pages[page_id] = page
             self.stack.addWidget(page)
 
@@ -115,6 +113,12 @@ class MainWindow(QMainWindow):
         db_note = f"v{__version__}  •  data: {container.paths.base}"
         self.statusBar().showMessage(db_note)
         self.statusBar().setSizeGripEnabled(False)
+
+    def closeEvent(self, event) -> None:
+        dashboard = self._pages.get("dashboard")
+        if isinstance(dashboard, DashboardView):
+            dashboard.shutdown()
+        super().closeEvent(event)
 
     def _navigate(self, page_id: str) -> None:
         widget = self._pages.get(page_id)

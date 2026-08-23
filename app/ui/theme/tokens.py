@@ -92,6 +92,16 @@ QFrame#card, QFrame#page {{
     background: {t.surface_bg}; border: 1px solid {t.border}; border-radius: 10px;
 }}
 
+QFrame#kpiCard {{
+    background: {t.surface_bg}; border: 1px solid {t.border}; border-radius: 10px;
+}}
+QFrame#kpiCard[accent_warning="true"] {{ border-left: 4px solid {t.warning}; }}
+QFrame#kpiCard[accent_critical="true"] {{ border-left: 4px solid {t.danger}; }}
+QLabel#kpiValue {{ font-size: 26px; font-weight: 700; background: transparent; }}
+QLabel#kpiValue[accent_ok="true"] {{ color: {t.text_primary}; }}
+QLabel#kpiValue[accent_warning="true"] {{ color: {t.warning}; }}
+QLabel#kpiValue[accent_critical="true"] {{ color: {t.danger}; }}
+
 QPushButton {{
     background: {t.surface_bg}; color: {t.text_primary};
     border: 1px solid {t.border}; border-radius: 6px; padding: 6px 14px;
