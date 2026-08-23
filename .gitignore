@@ -1,0 +1,40 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# --- Virtual environments ---
+.venv/
+venv/
+
+# --- Tooling caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Build outputs ---
+build/
+dist/
+*.spec.bak
+
+# --- Runtime data (never commit user data / databases / logs / exports) ---
+data/*
+!data/.gitkeep
+reports/*
+!reports/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+*.log
+*.log.*
+
+# --- Environment / secrets ---
+# This project stores no secrets; .env exists only for local dev overrides.
+.env
+
+# --- OS noise ---
+.DS_Store
+Thumbs.db
