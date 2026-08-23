@@ -13,6 +13,12 @@ class ActivityStatus(StrEnum):
     INFO = "info"
 
 
+class Severity(StrEnum):
+    INFO = "info"
+    WARNING = "warning"
+    CRITICAL = "critical"
+
+
 @dataclass(frozen=True)
 class ActivityEntry:
     """One auditable application action (audit/activity log row)."""
@@ -22,4 +28,18 @@ class ActivityEntry:
     module: str
     status: ActivityStatus
     message: str | None = None
+    id: int | None = None
+
+
+@dataclass(frozen=True)
+class AlertRecord:
+    """A raised alert (disk threshold, device offline, log anomaly, ...)."""
+
+    type: str
+    severity: Severity
+    source: str
+    message: str
+    created_at: datetime
+    acknowledged: bool = False
+    acknowledged_at: datetime | None = None
     id: int | None = None
