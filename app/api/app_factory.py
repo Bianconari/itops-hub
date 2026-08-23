@@ -37,6 +37,24 @@ from app.domain.time_utils import utc_now
 logger = logging.getLogger(__name__)
 
 TOKEN_HEADER = "X-API-Token"
+
+
+def write_token_file(container: AppContainer) -> None:
+    """Persist the per-session API token next to the data directory.
+
+    Called by both entry points (embedded and ``python -m app.api``) so the
+    token is always discoverable for local scripting. POSIX permissions are
+    tightened where the platform supports it.
+    """
+    import contextlib
+    from pathlib import Path
+
+    token_file = Path(container.paths.base) / "api-token"
+    with contextlib.suppress(OSError):
+        token_file.write_text(container.api_token, encoding="utf-8")
+        token_file.chmod(0o600)  # POSIX only; Windows relies on user-profile ACLs
+
+
 _EXEMPT_PATHS = {"/api/health", "/docs", "/openapi.json", "/redoc"}
 
 
@@ -215,8 +233,9 @@ def create_app(container: AppContainer) -> FastAPI:
     def run_backup(request: BackupRequest) -> dict[str, Any]:
         services = _services()
         assert services.backup_service is not None
+        mode = request.verify_mode or ("size" if request.verify else "none")
         job = services.backup_service.run_backup(
-            request.source, request.destination, verify=request.verify
+            request.source, request.destination, verify_mode=mode
         )
         return _backup_payload(job)
 

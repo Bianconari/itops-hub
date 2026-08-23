@@ -79,8 +79,9 @@ def start_embedded_api(container):
 
     import uvicorn
 
-    from app.api.app_factory import create_app
+    from app.api.app_factory import create_app, write_token_file
 
+    write_token_file(container)
     settings = container.settings_service.get()
     config = uvicorn.Config(
         create_app(container),

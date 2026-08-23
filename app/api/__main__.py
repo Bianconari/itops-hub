@@ -12,18 +12,10 @@ import sys
 
 import uvicorn
 
+from app.api.app_factory import create_app, write_token_file
 from app.application.container import AppContainer
 
 logger = logging.getLogger(__name__)
-
-
-def write_token_file(container: AppContainer) -> None:
-    token_file = container.paths.base / "api-token"
-    token_file.write_text(container.api_token, encoding="utf-8")
-    import contextlib
-
-    with contextlib.suppress(OSError):  # best-effort permissions (POSIX)
-        token_file.chmod(0o600)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -39,8 +31,6 @@ def main(argv: list[str] | None = None) -> int:
     if host not in ("127.0.0.1", "localhost", "::1"):
         logger.warning("binding to %s — non-loopback exposure is a deliberate user decision", host)
     write_token_file(container)
-
-    from app.api.app_factory import create_app
 
     print(f"ITOps Hub API v{container_version()} on http://{host}:{port}")
     print(f"Auth token: {container.api_token}")

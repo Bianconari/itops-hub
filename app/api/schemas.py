@@ -27,7 +27,8 @@ class LogAnalyzeRequest(BaseModel):
 class BackupRequest(BaseModel):
     source: str
     destination: str
-    verify: bool = True
+    verify: bool = True  # legacy: True -> "size", False -> "none"
+    verify_mode: Literal["none", "size", "sha256"] | None = None  # wins if set
 
 
 class ReportRequest(BaseModel):
