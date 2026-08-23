@@ -11,6 +11,7 @@ Safety rules (Spec §1.3-G, §15):
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import shutil
@@ -19,7 +20,7 @@ from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
 
-from app.domain.backup import BackupJob, BackupStatus, BackupStore
+from app.domain.backup import BackupJob, BackupStatus, BackupStore, VerifyMode
 from app.domain.cancellation import CancelToken, OperationCancelled
 from app.domain.events import EventBus, Topics
 from app.domain.time_utils import utc_now
@@ -64,11 +65,18 @@ class BackupService:
         source: str | Path,
         destination_root: str | Path,
         *,
-        verify: bool = True,
+        verify_mode: VerifyMode | str = VerifyMode.SIZE,
         token: CancelToken | None = None,
         on_progress: ProgressCallback | None = None,
     ) -> BackupJob:
-        """Copy ``source`` into a timestamped folder under ``destination_root``."""
+        """Copy ``source`` into a timestamped folder under ``destination_root``.
+
+        Verification modes (v1.5): ``size`` (default) compares the manifest's
+        file count and sizes; ``sha256`` additionally recomputes per-file
+        hashes; ``none`` skips verification. A failed verification marks the
+        job FAILED — never silently "success".
+        """
+        verify_mode = VerifyMode(verify_mode)
         src = validate_path(source, must_exist=True)
         dest_root = validate_path(destination_root)
         self._validate_layout(src, dest_root)
@@ -84,24 +92,31 @@ class BackupService:
         try:
             files_total, _bytes = self.estimate(src)
             copied, bytes_done, manifest = self._copy_tree(
-                src, dest, files_total, token, on_progress
+                src, dest, files_total, token, on_progress, verify_mode
             )
             self._write_manifest(dest, manifest)
-            verified = False
-            if verify and not token.cancelled:
-                verified = self._verify(dest, manifest)
-            status = (
-                BackupStatus.CANCELLED
-                if token.cancelled
-                else (BackupStatus.VERIFIED if verified else BackupStatus.SUCCESS)
-            )
+            verified: bool | None = None
+            verify_error: str | None = None
+            if verify_mode is not VerifyMode.NONE and not token.cancelled:
+                verified = self._verify(dest, manifest, verify_mode)
+                if verified is False:
+                    verify_error = "verification failed: manifest mismatch after copy"
+            if token.cancelled:
+                status = BackupStatus.CANCELLED
+            elif verify_error is not None:
+                status = BackupStatus.FAILED
+            elif verified:
+                status = BackupStatus.VERIFIED
+            else:
+                status = BackupStatus.SUCCESS
             job = replace(
                 job,
                 status=status,
                 completed_at=utc_now(),
                 size_bytes=bytes_done,
                 files_copied=copied,
-                checksum_verified=verified or None,
+                checksum_verified=verified,
+                error_message=verify_error,
             )
         except OperationCancelled:
             shutil.rmtree(dest, ignore_errors=True)  # remove only our partial copy
@@ -151,6 +166,7 @@ class BackupService:
         files_total: int,
         token: CancelToken,
         on_progress: ProgressCallback | None,
+        verify_mode: VerifyMode,
     ) -> tuple[int, int, list[dict[str, object]]]:
         manifest: list[dict[str, object]] = []
         bytes_done = 0
@@ -167,7 +183,10 @@ class BackupService:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_file, target)
             size = target.stat().st_size
-            manifest.append({"path": str(relative), "size": size})
+            entry: dict[str, object] = {"path": str(relative), "size": size}
+            if verify_mode is VerifyMode.SHA256:
+                entry["sha256"] = self._hash_file(target)
+            manifest.append(entry)
             copied += 1
             bytes_done += size
             if on_progress is not None:
@@ -181,15 +200,27 @@ class BackupService:
             encoding="utf-8",
         )
 
-    @staticmethod
-    def _verify(dest: Path, manifest: list[dict[str, object]]) -> bool:
+    def _verify(self, dest: Path, manifest: list[dict[str, object]], mode: VerifyMode) -> bool:
         for entry in manifest:
             target = dest / str(entry["path"])
             expected: int = entry["size"]  # type: ignore[assignment]
             if not target.is_file() or target.stat().st_size != expected:
-                logger.warning("verification failed for %s", target)
+                logger.warning("verification (size) failed for %s", target)
                 return False
+            if mode is VerifyMode.SHA256:
+                recorded = entry.get("sha256")
+                if recorded is not None and self._hash_file(target) != recorded:
+                    logger.warning("verification (sha256) failed for %s", target)
+                    return False
         return True
+
+    @staticmethod
+    def _hash_file(path: Path) -> str:
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     def _record(self, action: str, message: str) -> None:
         if self._activity is not None:

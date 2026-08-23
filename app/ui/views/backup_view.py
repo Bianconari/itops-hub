@@ -6,7 +6,7 @@ import logging
 
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (
-    QCheckBox,
+    QComboBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -55,7 +55,7 @@ class BackupWorker(QThread):
             job = self._service.run_backup(
                 self._source,
                 self._dest,
-                verify=self._verify,
+                verify_mode=self._verify_mode,
                 token=self.token,
                 on_progress=lambda done, total, bytez: self.progress.emit(done, total, bytez),
             )
@@ -120,10 +120,14 @@ class BackupView(QWidget):
         layout.addLayout(dest_row)
 
         actions = QHBoxLayout()
-        self.chk_verify = QCheckBox("Verify after copying (file count + sizes)")
-        self.chk_verify.setObjectName("chk_verify")
-        self.chk_verify.setChecked(True)
-        actions.addWidget(self.chk_verify)
+        verify_label = QLabel("Verification:")
+        actions.addWidget(verify_label)
+        self.combo_verify = QComboBox()
+        self.combo_verify.setObjectName("combo_verify")
+        self.combo_verify.addItem("Sizes & count (fast)", "size")
+        self.combo_verify.addItem("SHA-256 (thorough)", "sha256")
+        self.combo_verify.addItem("None", "none")
+        actions.addWidget(self.combo_verify)
         actions.addStretch(1)
         self.btn_cancel = QPushButton("Cancel")
         self.btn_cancel.setObjectName("btn_backup_cancel")
@@ -252,7 +256,7 @@ class BackupView(QWidget):
         self.lbl_progress.setText("Preparing…")
 
         self._worker = BackupWorker(
-            self._container.backup_service, source, dest, self.chk_verify.isChecked()
+            self._container.backup_service, source, dest, self.combo_verify.currentData()
         )
         self._worker.progress.connect(self._on_progress)
         self._worker.succeeded.connect(self._on_done)
@@ -358,7 +362,8 @@ class BackupView(QWidget):
                 "destination": dest,
                 "interval_hours": self.spin_hours.value(),
                 "enabled": True,
-                "verify": self.chk_verify.isChecked(),
+                "verify": self.combo_verify.currentData() != "none",
+                "verify_mode": self.combo_verify.currentData(),
             }
         )
         service.update({"backup_profiles": profiles})

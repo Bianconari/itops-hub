@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import pathlib
 
 import pytest
 from app.application.container import AppContainer
@@ -43,7 +44,7 @@ class TestBackupService:
 
     def test_run_backup_copies_and_verifies(self, backup, source_tree, tmp_path):
         dest_root = tmp_path / "backups"
-        job = backup.run_backup(source_tree, dest_root, verify=True)
+        job = backup.run_backup(source_tree, dest_root, verify_mode="size")
         assert job.status is BackupStatus.VERIFIED
         assert job.files_copied == 3
         assert job.error_message is None
@@ -55,7 +56,9 @@ class TestBackupService:
         assert backup_dir.parent == dest_root
 
     def test_single_file_backup(self, backup, source_tree, tmp_path):
-        job = backup.run_backup(source_tree / "report.txt", tmp_path / "backups", verify=True)
+        job = backup.run_backup(
+            source_tree / "report.txt", tmp_path / "backups", verify_mode="size"
+        )
         assert job.status is BackupStatus.VERIFIED
         assert job.files_copied == 1
 
@@ -90,6 +93,41 @@ class TestBackupService:
         assert leftovers == [], "partial backup must be removed on cancel"
         jobs = backup.history()
         assert jobs[0].status is BackupStatus.CANCELLED
+
+    def test_sha256_mode_records_hashes_and_verifies(self, backup, source_tree, tmp_path):
+        job = backup.run_backup(source_tree, tmp_path / "backups", verify_mode="sha256")
+        assert job.status is BackupStatus.VERIFIED
+        manifest = json.loads((pathlib.Path(job.destination) / "manifest.json").read_text())
+        assert all("sha256" in entry for entry in manifest["files"])
+        assert len(manifest["files"][0]["sha256"]) == 64
+
+    def test_tampered_copy_fails_verification(self, backup, source_tree, tmp_path):
+        job = backup.run_backup(source_tree, tmp_path / "backups", verify_mode="sha256")
+        assert job.status is BackupStatus.VERIFIED
+        dest = pathlib.Path(job.destination)
+        manifest = json.loads((dest / "manifest.json").read_text())
+
+        # corrupt one copied file -> verification must report failure
+        victim = dest / manifest["files"][0]["path"]
+        victim.write_bytes(b"tampered")
+        from app.domain.backup import VerifyMode
+
+        assert backup._verify(dest, manifest["files"], VerifyMode.SHA256) is False
+        assert backup._verify(dest, manifest["files"], VerifyMode.SIZE) is False
+
+        # restore original bytes -> verification passes again (sha matches)
+        original = pathlib.Path(job.source) / manifest["files"][0]["path"]
+        victim.write_bytes(original.read_bytes())
+        assert backup._verify(dest, manifest["files"], VerifyMode.SHA256) is True
+
+    def test_none_mode_skips_verification(self, backup, source_tree, tmp_path):
+        job = backup.run_backup(source_tree, tmp_path / "backups", verify_mode="none")
+        assert job.status is BackupStatus.SUCCESS
+        assert job.checksum_verified is None
+
+    def test_invalid_mode_rejected(self, backup, source_tree, tmp_path):
+        with pytest.raises(ValueError):
+            backup.run_backup(source_tree, tmp_path / "backups", verify_mode="md5")
 
     def test_history_recorded(self, backup, source_tree, tmp_path):
         backup.run_backup(source_tree, tmp_path / "backups")

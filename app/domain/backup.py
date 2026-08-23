@@ -8,6 +8,14 @@ from enum import StrEnum
 from typing import Protocol
 
 
+class VerifyMode(StrEnum):
+    """Backup verification strategies (v1.5)."""
+
+    NONE = "none"  # copy only
+    SIZE = "size"  # manifest size/count comparison
+    SHA256 = "sha256"  # size + per-file SHA-256 recomparison
+
+
 class BackupStatus(StrEnum):
     RUNNING = "running"
     SUCCESS = "success"

@@ -109,9 +109,8 @@ class SchedulerService:
             due = self._next_backup.get(profile.name, 0.0)
             if now >= due:
                 self._next_backup[profile.name] = now + profile.interval_hours * 3600
-                self._pool.submit(
-                    self._safe_backup, profile.source, profile.destination, profile.verify
-                )
+                mode = profile.verify_mode or ("size" if profile.verify else "none")
+                self._pool.submit(self._safe_backup, profile.source, profile.destination, mode)
 
         # --- retention once a day
         if now >= self._next_retention:
@@ -136,9 +135,9 @@ class SchedulerService:
         except Exception:
             logger.exception("scheduled snapshot failed")
 
-    def _safe_backup(self, source: str, destination: str, verify: bool) -> None:
+    def _safe_backup(self, source: str, destination: str, verify_mode: str) -> None:
         try:
-            self._backups.run_backup(source, destination, verify=verify)
+            self._backups.run_backup(source, destination, verify_mode=verify_mode)
         except Exception:
             logger.exception("scheduled backup failed (%s)", source)
 

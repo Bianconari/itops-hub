@@ -69,6 +69,9 @@ class BackupProfile(BaseModel):
     interval_hours: int = Field(default=24, ge=1, le=24 * 30)
     enabled: bool = True
     verify: bool = True
+    #: Optional verification strategy override: "none" | "size" | "sha256".
+    #: None falls back to the legacy boolean (verify -> size, else none).
+    verify_mode: str | None = Field(default=None, pattern=r"^(none|size|sha256)$")
 
 
 class ApiSettings(BaseModel):
