@@ -98,6 +98,18 @@ class ExportService:
         }
         return self._write("log-analysis", fmt, metadata, headers, rows)
 
+    # ------------------------------------------------------------ generic
+    def export_table(
+        self,
+        stem: str,
+        fmt: ExportFormat,
+        metadata: dict[str, Any],
+        headers: Sequence[str],
+        rows: Sequence[dict[str, Any]],
+    ) -> Path:
+        """Generic report writer shared by all report builders."""
+        return self._write(stem, fmt, metadata, headers, rows)
+
     # ------------------------------------------------------------ core
     def _write(
         self,
@@ -141,7 +153,7 @@ class ExportService:
     @staticmethod
     def _write_csv(path: Path, headers: Sequence[str], rows: Sequence[dict[str, Any]]) -> None:
         with path.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=list(headers))
+            writer = csv.DictWriter(handle, fieldnames=list(headers), extrasaction="ignore")
             writer.writeheader()
             writer.writerows(rows)
 

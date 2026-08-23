@@ -23,6 +23,7 @@ from app.ui.views.logs_view import LogsView
 from app.ui.views.monitoring_view import MonitoringView
 from app.ui.views.network_view import NetworkView
 from app.ui.views.placeholder_page import PlaceholderPage
+from app.ui.views.reports_view import ReportsView
 from app.ui.views.settings_view import SettingsView
 from app.ui.views.system_view import SystemView
 
@@ -34,7 +35,7 @@ _PAGES: list[tuple[str, str, str | None]] = [
     ("monitoring", "Monitoring", None),  # implemented (v0.6)
     ("logs", "Logs", None),  # implemented (v0.7)
     ("backups", "Backups", "v1.2 (M9)"),
-    ("reports", "Reports", "v0.8 (M7)"),
+    ("reports", "Reports", None),  # implemented (v0.8)
     ("alerts", "Alerts", None),  # implemented (v0.6)
     ("settings", "Settings", None),  # implemented
 ]
@@ -93,6 +94,8 @@ class MainWindow(QMainWindow):
                 page = AlertsView(container, theme_service)
             elif page_id == "logs":
                 page = LogsView(container)
+            elif page_id == "reports":
+                page = ReportsView(container)
             else:
                 page = SettingsView(container)
             self._pages[page_id] = page
@@ -113,6 +116,7 @@ class MainWindow(QMainWindow):
             ("network", NetworkView),
             ("monitoring", MonitoringView),
             ("logs", LogsView),
+            ("reports", ReportsView),
         ):
             page = self._pages.get(page_id)
             if isinstance(page, shutdown_owner):

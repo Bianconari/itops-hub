@@ -41,6 +41,7 @@ from app.services.export_service import ExportService
 from app.services.log_analysis_service import LogAnalysisService
 from app.services.monitor_service import MonitorService
 from app.services.network_scan_service import NetworkScanService
+from app.services.report_service import ReportService
 from app.services.settings_service import SettingsService
 from app.services.snapshot_service import SnapshotService
 from app.services.system_service import SystemInfoService
@@ -64,6 +65,7 @@ class AppContainer:
     monitor_service: MonitorService | None = None
     disk_service: DiskService | None = None
     log_service: LogAnalysisService | None = None
+    report_service: ReportService | None = None
     engine: Engine | None = None
     session_factory: sessionmaker[Session] | None = None
 
@@ -119,6 +121,15 @@ class AppContainer:
             container.system_service.get_drives, settings_getter, container.alert_service
         )
         container.log_service = LogAnalysisService(activity=container.activity_service)
+        assert container.monitor_service is not None
+        container.report_service = ReportService(
+            container.export_service,
+            container.monitor_service,
+            container.alert_service,
+            container.activity_service,
+            container.disk_service,
+            container.snapshot_service,
+        )
 
         log_level = container.settings_service.get().log_level.value
         configure_logging(container.paths.log_dir, log_level, console=console)
