@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from app.config.settings import AppSettings
@@ -75,6 +76,36 @@ class SettingsService:
                 message=sanitize_text(f"Changed: {summary}") or None,
             )
         return new_settings
+
+    # ------------------------------------------------------------ portability
+    def export_to(self, path: str | Path) -> Path:
+        """Write current settings to a JSON file (for transfer/backup)."""
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        document = {"application": "ITOps Hub", "settings": self.get().model_dump(mode="json")}
+        target.write_text(json.dumps(document, indent=2), encoding="utf-8")
+        if self._activity is not None:
+            self._activity.record(
+                "settings.exported", module="settings", message=f"file={target.name}"
+            )
+        return target
+
+    def import_from(self, path: str | Path) -> AppSettings:
+        """Validate and apply settings from an export file.
+
+        Raises ValueError when the file is unreadable or invalid; nothing is
+        applied in that case.
+        """
+        source = Path(path)
+        try:
+            document = json.loads(source.read_text(encoding="utf-8"))
+            payload = document.get("settings", document)
+            new_settings = AppSettings.model_validate(payload)
+        except (OSError, KeyError, json.JSONDecodeError) as exc:
+            raise ValueError(f"Invalid settings file: {exc}") from exc
+        except ValueError:
+            raise
+        return self.update(new_settings.model_dump(mode="json"))
 
 
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:

@@ -24,6 +24,7 @@ from app.infrastructure.db.migrate import run_migrations
 from app.infrastructure.db.repositories import (
     ActivityRepository,
     AlertRepository,
+    BackupJobRepository,
     DeviceRepository,
     MonitoringResultRepository,
     SettingRepository,
@@ -36,12 +37,14 @@ from app.infrastructure.network.system_pinger import SystemPinger
 from app.infrastructure.system.psutil_source import PsutilSystemSource
 from app.services.activity_service import ActivityLogService
 from app.services.alert_service import AlertService
+from app.services.backup_service import BackupService
 from app.services.disk_service import DiskService
 from app.services.export_service import ExportService
 from app.services.log_analysis_service import LogAnalysisService
 from app.services.monitor_service import MonitorService
 from app.services.network_scan_service import NetworkScanService
 from app.services.report_service import ReportService
+from app.services.scheduler_service import SchedulerService
 from app.services.settings_service import SettingsService
 from app.services.snapshot_service import SnapshotService
 from app.services.system_service import SystemInfoService
@@ -66,6 +69,8 @@ class AppContainer:
     disk_service: DiskService | None = None
     log_service: LogAnalysisService | None = None
     report_service: ReportService | None = None
+    backup_service: BackupService | None = None
+    scheduler_service: SchedulerService | None = None
     engine: Engine | None = None
     session_factory: sessionmaker[Session] | None = None
 
@@ -121,6 +126,16 @@ class AppContainer:
             container.system_service.get_drives, settings_getter, container.alert_service
         )
         container.log_service = LogAnalysisService(activity=container.activity_service)
+        container.backup_service = BackupService(
+            BackupJobRepository(sessions), activity=container.activity_service, bus=container.bus
+        )
+        container.scheduler_service = SchedulerService(
+            settings_getter,
+            container.monitor_service,
+            container.snapshot_service,
+            container.backup_service,
+            lambda retention_days: container.apply_retention(),
+        )
         assert container.monitor_service is not None
         container.report_service = ReportService(
             container.export_service,

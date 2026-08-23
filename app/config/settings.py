@@ -60,6 +60,17 @@ class NotificationSettings(BaseModel):
     desktop: bool = True
 
 
+class BackupProfile(BaseModel):
+    """A saved, schedulable backup definition."""
+
+    name: str = Field(min_length=1, max_length=100)
+    source: str
+    destination: str
+    interval_hours: int = Field(default=24, ge=1, le=24 * 30)
+    enabled: bool = True
+    verify: bool = True
+
+
 class ApiSettings(BaseModel):
     """Local FastAPI service settings (API ships in v1.5).
 
@@ -91,6 +102,9 @@ class AppSettings(BaseModel):
 
     #: History retention (monitoring results / system snapshots), in days.
     retention_days: int = Field(default=30, ge=1, le=3650)
+
+    #: Scheduled backup profiles (see BackupProfile; runs via SchedulerService).
+    backup_profiles: list[BackupProfile] = Field(default_factory=list)
 
     #: Network scanner behavior.
     scan_max_workers: int = Field(default=64, ge=1, le=512)

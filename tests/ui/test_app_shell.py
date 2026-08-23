@@ -45,9 +45,15 @@ class TestMainWindow:
         main_window.sidebar.navigate.emit("network")
         assert main_window.stack.currentWidget() is main_window._pages["network"]
 
-    def test_placeholder_pages_are_labeled_honestly(self, main_window: MainWindow):
-        planned = main_window._pages["backups"].planned_label.text()
-        assert "Planned for" in planned
+    def test_every_page_is_a_real_view(self, main_window: MainWindow):
+        from app.ui.views.placeholder_page import PlaceholderPage
+
+        placeholders = [
+            page_id
+            for page_id, page in main_window._pages.items()
+            if isinstance(page, PlaceholderPage)
+        ]
+        assert placeholders == []  # v1.2+: all nine pages are implemented
 
     def test_dashboard_and_system_are_real_views(self, main_window: MainWindow):
         from app.ui.views.dashboard_view import DashboardView

@@ -14,6 +14,7 @@ from datetime import datetime
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
+from app.domain.backup import BackupJob, BackupStatus
 from app.domain.entities import ActivityEntry, ActivityStatus, AlertRecord, Severity
 from app.domain.monitoring import Device, MonitorResult, MonitorState
 from app.domain.system import SystemSnapshotEntity
@@ -21,6 +22,7 @@ from app.domain.time_utils import utc_now
 from app.infrastructure.db.models import (
     ActivityLogModel,
     AlertModel,
+    BackupJobModel,
     DeviceModel,
     MonitoringResultModel,
     SettingModel,
@@ -391,5 +393,72 @@ def _to_monitor_entity(row: MonitoringResultModel) -> MonitorResult:
         timestamp=row.timestamp,
         status=MonitorState(row.status),
         response_time_ms=row.response_time_ms,
+        error_message=row.error_message,
+    )
+
+
+class BackupJobRepository:
+    """Persistence for backup executions."""
+
+    def __init__(self, session_factory: SessionFactory) -> None:
+        self._sessions = session_factory
+
+    def add(self, job: BackupJob) -> BackupJob:
+        with self._sessions() as session:
+            row = BackupJobModel(
+                source=job.source,
+                destination=job.destination,
+                started_at=job.started_at,
+                completed_at=job.completed_at,
+                status=job.status.value,
+                size_bytes=job.size_bytes,
+                files_copied=job.files_copied,
+                checksum_verified=job.checksum_verified,
+                error_message=job.error_message,
+            )
+            session.add(row)
+            session.commit()
+            session.refresh(row)
+            return _to_backup_entity(row)
+
+    def update(self, job: BackupJob) -> BackupJob:
+        if job.id is None:
+            raise ValueError("job id is required to update")
+        with self._sessions() as session:
+            row = session.get(BackupJobModel, job.id)
+            if row is None:
+                raise ValueError(f"backup job {job.id} does not exist")
+            row.status = job.status.value
+            row.completed_at = job.completed_at
+            row.size_bytes = job.size_bytes
+            row.files_copied = job.files_copied
+            row.checksum_verified = job.checksum_verified
+            row.error_message = job.error_message
+            session.commit()
+            session.refresh(row)
+            return _to_backup_entity(row)
+
+    def list_recent(self, limit: int = 50) -> list[BackupJob]:
+        with self._sessions() as session:
+            rows = (
+                session.query(BackupJobModel)
+                .order_by(BackupJobModel.started_at.desc(), BackupJobModel.id.desc())
+                .limit(limit)
+                .all()
+            )
+            return [_to_backup_entity(row) for row in rows]
+
+
+def _to_backup_entity(row: BackupJobModel) -> BackupJob:
+    return BackupJob(
+        id=row.id,
+        source=row.source,
+        destination=row.destination,
+        started_at=row.started_at,
+        status=BackupStatus(row.status),
+        completed_at=row.completed_at,
+        size_bytes=row.size_bytes,
+        files_copied=row.files_copied,
+        checksum_verified=row.checksum_verified,
         error_message=row.error_message,
     )

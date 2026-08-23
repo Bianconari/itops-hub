@@ -154,6 +154,19 @@ class SettingsView(QWidget):
 
         layout.addLayout(form)
 
+        # --- Portability ---
+        portability = QHBoxLayout()
+        self.btn_export_settings = QPushButton("Export settings…")
+        self.btn_export_settings.setObjectName("btn_export_settings")
+        self.btn_export_settings.clicked.connect(self._on_export_settings)
+        portability.addWidget(self.btn_export_settings)
+        self.btn_import_settings = QPushButton("Import settings…")
+        self.btn_import_settings.setObjectName("btn_import_settings")
+        self.btn_import_settings.clicked.connect(self._on_import_settings)
+        portability.addWidget(self.btn_import_settings)
+        portability.addStretch(1)
+        layout.addLayout(portability)
+
         # --- Save ---
         buttons = QHBoxLayout()
         self.btn_save = QPushButton("Save settings")
@@ -232,6 +245,44 @@ class SettingsView(QWidget):
             self._set_status("Saved", "success")
         finally:
             self.btn_save.setEnabled(True)
+
+    def _on_export_settings(self) -> None:
+        from PySide6.QtWidgets import QFileDialog
+
+        default = self._settings().default_export_dir or AppPaths.create().default_export_dir
+        chosen, _ = QFileDialog.getSaveFileName(
+            self, "Export settings", str(default / "itops-settings.json"), "JSON (*.json)"
+        )
+        if not chosen:
+            return
+        try:
+            path = self._container.settings_service.export_to(chosen)
+        except OSError as exc:
+            self._set_status(f"Export failed: {exc}", "danger")
+        else:
+            self._set_status(f"Saved: {path}", "success")
+
+    def _on_import_settings(self) -> None:
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+        chosen, _ = QFileDialog.getOpenFileName(self, "Import settings", "", "JSON (*.json)")
+        if not chosen:
+            return
+        confirm = QMessageBox.question(
+            self,
+            "Import settings",
+            "Apply all settings from this file? Current settings will be replaced.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            self._container.settings_service.import_from(chosen)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Import failed", f"{exc}")
+        else:
+            self._load()
+            self._set_status("Settings imported", "success")
 
     def _browse_export_dir(self) -> None:
         chosen = QFileDialog.getExistingDirectory(self, "Choose default export directory")
