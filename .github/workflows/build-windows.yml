@@ -21,14 +21,19 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller itopshub.spec --noconfirm
       - name: Run packaged selftest (exit code)
+        # The exe is a windowed (GUI-subsystem) binary: PowerShell does not
+        # wait for it, so use Start-Process -Wait and read ExitCode.
         run: |
           $env:ITOPS_HUB_DATA_DIR = "D:\a\selftest-data"
-          ./dist/ITOpsHub/ITOpsHub.exe --selftest
-          if ($LASTEXITCODE -ne 0) {
+          $proc = Start-Process -FilePath "./dist/ITOpsHub/ITOpsHub.exe" `
+            -ArgumentList "--selftest" -Wait -PassThru -NoNewWindow `
+            -RedirectStandardOutput "selftest-stdout.txt"
+          Get-Content "selftest-stdout.txt"
+          if ($proc.ExitCode -ne 0) {
             Write-Host "=== selftest diagnostic ==="
             Get-Content "$env:TEMP\itopshub-selftest.log" -ErrorAction SilentlyContinue
             Get-Content "D:\a\selftest-data\logs\itops-hub.log" -Tail 30 -ErrorAction SilentlyContinue
-            throw "selftest failed: $LASTEXITCODE"
+            throw "selftest failed: $($proc.ExitCode)"
           }
         shell: pwsh
       - name: Build installer (Inno Setup)

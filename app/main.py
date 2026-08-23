@@ -42,11 +42,12 @@ def run_selftest() -> int:
         import tempfile
 
         diagnostic = traceback.format_exc()
-        log_path = __import__("pathlib").Path(tempfile.gettempdir()) / "itopshub-selftest.log"
-        try:
+        import contextlib
+        from pathlib import Path
+
+        log_path = Path(tempfile.gettempdir()) / "itopshub-selftest.log"
+        with contextlib.suppress(OSError):
             log_path.write_text(diagnostic, encoding="utf-8")
-        except OSError:
-            pass
         print(diagnostic)
         return 1
 
