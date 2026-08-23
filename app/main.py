@@ -51,7 +51,7 @@ def run_selftest() -> int:
         return 1
 
 
-def _run_selftest(container_factory) -> int:  # noqa: ANN001
+def _run_selftest(container_factory) -> int:
     container = container_factory(console=False)
 
     settings = container.settings_service.get()
