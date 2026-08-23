@@ -30,9 +30,29 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run_selftest() -> int:
     """Headless verification of the core stack (no Qt)."""
+    import traceback
+
     from app.application.container import AppContainer
 
-    container = AppContainer.build(console=False)
+    try:
+        return _run_selftest(AppContainer.build)
+    except Exception:
+        # Windowed builds have no stdout: persist the traceback next to the
+        # data dir so CI (and users) can see what failed.
+        import tempfile
+
+        diagnostic = traceback.format_exc()
+        log_path = __import__("pathlib").Path(tempfile.gettempdir()) / "itopshub-selftest.log"
+        try:
+            log_path.write_text(diagnostic, encoding="utf-8")
+        except OSError:
+            pass
+        print(diagnostic)
+        return 1
+
+
+def _run_selftest(container_factory) -> int:  # noqa: ANN001
+    container = container_factory(console=False)
 
     settings = container.settings_service.get()
     assert settings.schema_version >= 1, "settings model failed to load"

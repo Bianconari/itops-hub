@@ -22,8 +22,14 @@ jobs:
         run: pyinstaller itopshub.spec --noconfirm
       - name: Run packaged selftest (exit code)
         run: |
+          $env:ITOPS_HUB_DATA_DIR = "D:\a\selftest-data"
           ./dist/ITOpsHub/ITOpsHub.exe --selftest
-          if ($LASTEXITCODE -ne 0) { throw "selftest failed: $LASTEXITCODE" }
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "=== selftest diagnostic ==="
+            Get-Content "$env:TEMP\itopshub-selftest.log" -ErrorAction SilentlyContinue
+            Get-Content "D:\a\selftest-data\logs\itops-hub.log" -Tail 30 -ErrorAction SilentlyContinue
+            throw "selftest failed: $LASTEXITCODE"
+          }
         shell: pwsh
       - name: Build installer (Inno Setup)
         run: |
