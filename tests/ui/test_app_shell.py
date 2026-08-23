@@ -46,7 +46,7 @@ class TestMainWindow:
         assert main_window.stack.currentWidget() is main_window._pages["network"]
 
     def test_placeholder_pages_are_labeled_honestly(self, main_window: MainWindow):
-        planned = main_window._pages["network"].planned_label.text()
+        planned = main_window._pages["monitoring"].planned_label.text()
         assert "Planned for" in planned
 
     def test_dashboard_and_system_are_real_views(self, main_window: MainWindow):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from datetime import datetime
 
 from app.domain.system import DriveUsage, LiveMetrics, SystemInfo, SystemSnapshotEntity
@@ -121,3 +122,63 @@ class FakeSnapshotStore:
         removed = len(self.rows) - len(kept)
         self.rows = kept
         return removed
+
+
+class FakeActivityStore:
+    """In-memory ActivityStore double."""
+
+    def __init__(self) -> None:
+        self.entries: list = []
+
+    def append(self, entry):
+        stored = dataclasses.replace(entry, id=len(self.entries) + 1)
+        self.entries.append(stored)
+        return stored
+
+    def recent(self, limit: int = 100):
+        return list(reversed(self.entries))[:limit]
+
+
+class FakePinger:
+    """Configurable Pinger double: explicit reachable map + call counting."""
+
+    def __init__(
+        self,
+        reachable: set[str] | None = None,
+        latency: float = 5.0,
+        delay: float = 0.0,
+        error: str = "no reply",
+    ) -> None:
+        self._reachable = reachable or set()
+        self._latency = latency
+        self._delay = delay
+        self._error = error
+        self.calls: list[str] = []
+
+    def ping(self, host: str, timeout_ms: int):
+        import time as _time
+
+        from app.domain.network import PingResult
+
+        self.calls.append(host)
+        if self._delay:
+            _time.sleep(self._delay)
+        if host in self._reachable:
+            return PingResult(host=host, reachable=True, response_time_ms=self._latency)
+        return PingResult(host=host, reachable=False, error=self._error)
+
+
+class FakeResolver:
+    def __init__(self, names: dict[str, str] | None = None) -> None:
+        self._names = names or {}
+
+    def resolve(self, ip: str):
+        return self._names.get(ip)
+
+
+class FakeArp:
+    def __init__(self, table: dict[str, str] | None = None) -> None:
+        self._table = table or {}
+
+    def mac_map(self) -> dict[str, str]:
+        return dict(self._table)
