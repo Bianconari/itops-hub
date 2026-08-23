@@ -47,6 +47,12 @@ class MonitoringSettings(BaseModel):
     timeout_ms: int = Field(default=1500, ge=100, le=10000)
 
 
+class SnapshotSettings(BaseModel):
+    """System snapshot recording cadence (dashboard history + trends)."""
+
+    interval_seconds: int = Field(default=60, ge=5, le=3600)
+
+
 class NotificationSettings(BaseModel):
     in_app: bool = True
     desktop: bool = True
@@ -73,6 +79,7 @@ class AppSettings(BaseModel):
     log_level: LogLevel = LogLevel.INFO
 
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
+    snapshots: SnapshotSettings = Field(default_factory=SnapshotSettings)
     disk: DiskThresholdSettings = Field(default_factory=DiskThresholdSettings)
     notifications: NotificationSettings = Field(default_factory=NotificationSettings)
     api: ApiSettings = Field(default_factory=ApiSettings)
