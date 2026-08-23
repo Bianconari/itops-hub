@@ -28,9 +28,14 @@ from app.infrastructure.db.repositories import (
     SystemSnapshotRepository,
 )
 from app.infrastructure.logging_setup import configure_logging
+from app.infrastructure.network.arp_table import ArpTable
+from app.infrastructure.network.resolver import SocketHostnameResolver
+from app.infrastructure.network.system_pinger import SystemPinger
 from app.infrastructure.system.psutil_source import PsutilSystemSource
 from app.services.activity_service import ActivityLogService
 from app.services.alert_service import AlertService
+from app.services.export_service import ExportService
+from app.services.network_scan_service import NetworkScanService
 from app.services.settings_service import SettingsService
 from app.services.snapshot_service import SnapshotService
 from app.services.system_service import SystemInfoService
@@ -49,6 +54,8 @@ class AppContainer:
     alert_service: AlertService | None = None
     system_service: SystemInfoService | None = None
     snapshot_service: SnapshotService | None = None
+    network_scan_service: NetworkScanService | None = None
+    export_service: ExportService | None = None
     engine: Engine | None = None
     session_factory: sessionmaker[Session] | None = None
 
@@ -77,6 +84,17 @@ class AppContainer:
             container.alert_service = AlertService(alert_repo)
             settings_getter: Callable[[], AppSettings] = container.settings_service.get
             container.system_service = SystemInfoService(PsutilSystemSource(), settings_getter)
+            container.network_scan_service = NetworkScanService(
+                SystemPinger(),
+                SocketHostnameResolver(),
+                ArpTable(),
+                settings_getter,
+                activity=container.activity_service,
+                bus=container.bus,
+            )
+            container.export_service = ExportService(
+                settings_getter, container.paths, container.activity_service
+            )
         finally:
             session.close()
 
