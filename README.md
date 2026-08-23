@@ -8,11 +8,13 @@ operations, reporting, and automation in a single modern desktop application.
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
 
-> **Current state: v0.3 (M2 — Core Setup).** The architecture, database,
-> settings, audit logging, theming, and application shell are real and
-> tested (79 automated tests). Feature modules land milestone by milestone —
-> see [Project Roadmap](#project-roadmap). Pages not yet implemented are
-> labeled in-app with the exact version where they arrive; there are no mock
+> **Current state: v0.4 (M3 — System Module & Dashboard).** The
+> architecture, database, settings, audit logging, theming, application
+> shell, **live dashboard** (KPI cards, real-time CPU/RAM/disk chart, health
+> summary) and **System page** are real and tested (145 automated tests).
+> Feature modules land milestone by milestone — see
+> [Project Roadmap](#project-roadmap). Pages not yet implemented are labeled
+> in-app with the exact version where they arrive; there are no mock
 > features.
 
 ## Overview
@@ -35,8 +37,8 @@ local history and an auditable activity trail.
 
 | Module | What it does | Status |
 |---|---|---|
-| Dashboard | KPI cards, live charts, health summary, recent alerts/activity | v0.4 (M3) |
-| System | Hostname, OS, CPU, RAM, storage, adapters, IPs, uptime | v0.4 (M3) |
+| Dashboard | KPI cards, live charts, health summary, recent alerts/activity | **v0.4 ✅** |
+| System | Hostname, OS, CPU, RAM, storage, adapters, IPs, uptime | **v0.4 ✅** |
 | Network | Authorized CIDR scanning with progress, cancel, export | v0.5 (M4) |
 | Monitoring | Ping monitors with states, latency history, alerts | v0.6 (M5) |
 | Disk | Drive usage with configurable warning/critical thresholds | v0.6 (M5) |
@@ -49,11 +51,16 @@ local history and an auditable activity trail.
 
 ## Screenshots
 
-| Shell (light) | Settings (dark) |
+| Dashboard — live KPIs & chart (light) | Dashboard (dark) |
 |---|---|
-| ![](docs/screenshots/m2-shell-light.png) | ![](docs/screenshots/m2-shell-dark-settings.png) |
+| ![](docs/screenshots/m4-dashboard-light.png) | ![](docs/screenshots/m4-dashboard-dark.png) |
 
-Real offscreen captures of the running application (v0.3).
+| System inventory (dark) | Settings (dark) |
+|---|---|
+| ![](docs/screenshots/m4-system-dark.png) | ![](docs/screenshots/m2-shell-dark-settings.png) |
+
+Real offscreen captures of the running application (v0.4) with live
+psutil data — no mock data.
 
 ## Architecture
 
@@ -178,7 +185,7 @@ packaging milestones. Details: `docs/deployment.md` (added at v1.0).
 |---|---|
 | v0.1–v0.2 | Planning & architecture ✅ |
 | v0.3 | Core setup: repo, CI, DB, settings, theming, shell ✅ |
-| v0.4 | System module + Dashboard (charts) |
+| v0.4 | System module + Dashboard (live charts, snapshots, retention) ✅ |
 | v0.5 | Network scanner |
 | v0.6 | Monitoring + Disk + Alerts |
 | v0.7 | Log analyzer |

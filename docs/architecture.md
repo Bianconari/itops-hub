@@ -79,11 +79,13 @@ SettingsView (form) ──update(dict)──▶ SettingsService
 |---|---|---|
 | Composition root, container | v0.3 ✅ | `app/application/container.py` |
 | Settings model + service | v0.3 ✅ | `app/config/settings.py`, `app/services/settings_service.py` |
+| Snapshot persistence + retention | v0.4 ✅ | `app/services/snapshot_service.py` |
 | Activity/audit log | v0.3 ✅ | `app/services/activity_service.py` |
 | DB schema (all 7 tables) + migrations | v0.3 ✅ | `app/infrastructure/db/` |
 | Theme system (light/dark) | v0.3 ✅ | `app/ui/theme/` |
 | Shell + navigation + functional Settings page | v0.3 ✅ | `app/ui/main_window/`, `app/ui/views/` |
-| System info + Dashboard | v0.4 (M3) | planned |
+| System info + Dashboard (KPIs, live chart, snapshots, retention) | v0.4 ✅ | `app/services/system_service.py`, `app/ui/views/dashboard_view.py` |
+| System inventory page | v0.4 ✅ | `app/ui/views/system_view.py` |
 | Network scanner | v0.5 (M4) | planned |
 | Monitoring / Disk / Alerts | v0.6 (M5) | planned |
 | Log analyzer | v0.7 (M6) | planned |

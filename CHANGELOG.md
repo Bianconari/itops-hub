@@ -6,9 +6,35 @@ versioning follows [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
-### Planned next (v0.4 / M3)
-- System information service (psutil) and System page
-- Dashboard with KPI cards, live PyQtGraph charts, snapshot recording
+### Planned next (v0.5 / M4)
+- Network scan service (CIDR validation, concurrent checks, cancel, ARP/hostname)
+- Network scanner page with results table and export
+
+## [0.4.0] — 2026-08-23 — System Module & Dashboard (M3)
+
+### Added
+- `SystemInfoService` over a new `SystemMetricsSource` Protocol: static system
+  facts (hostname, OS, CPU model/cores/frequency, RAM, boot time, adapters),
+  drive usages, live metrics, and threshold-classified `SystemStatus`
+- Production `PsutilSystemSource` adapter (no admin rights; CPU model via
+  `PROCESSOR_IDENTIFIER` on Windows / `/proc/cpuinfo` on Linux)
+- `SnapshotService` + `SystemSnapshotRepository`: persisted history with
+  time-range queries and retention pruning (applied on app start)
+- Alert read feed (`AlertService` + `AlertRepository`) powering the dashboard
+  panel (raising/acknowledging arrives in v0.6)
+- Dashboard view: overall health card (hostname, OS, IPv4, interfaces, uptime),
+  CPU/RAM/Disk KPI cards with severity accents, live 10-minute PyQtGraph
+  utilization chart (CPU/Memory/Disk), recent alerts + activity feeds,
+  pause/resume, snapshot recording at the configured cadence
+- Reusable widgets: `KpiCard`, `TimeSeriesChart` (token-themed pyqtgraph
+  wrapper); workers: `OneShotWorker`, `MetricsPoller` (QThread, UI never blocks)
+- System view: full inventory with storage-volume and network-adapter tables,
+  threshold-colored usage, off-thread refresh with loading/error states
+- Settings: new system snapshot interval control
+- 66 new tests (145 total): domain units, service fakes, repository
+  integration, psutil adapter contracts, offscreen UI (KPI/chart/dashboard/
+  system view incl. error paths); fixed a real teardown race in OneShotWorker
+  (moveToThread pattern replaced with a QThread subclass)
 
 ## [0.3.0] — 2026-08-23 — Core Setup (M2)
 
@@ -31,7 +57,7 @@ versioning follows [SemVer](https://semver.org/).
 - Entry points: `python -m app.main [--version|--selftest]`
 - CI (lint/type/test on ubuntu + windows, Qt offscreen) and Windows
   PyInstaller build workflow (first execution pending repo push — AD-002)
-- 79 automated tests (unit / integration / offscreen UI); ruff + mypy strict
+- 145 automated tests (unit / integration / offscreen UI); ruff + mypy strict
   clean; docs: architecture, decisions, M1 planning; MIT license
 
 ## [0.2.0] — 2026-08-23 — Architecture (M1)
