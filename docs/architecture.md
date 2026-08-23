@@ -1,97 +1,146 @@
 # Architecture
 
-ITOps Hub is a layered desktop application with a Qt-free core, so the same
-business services power the PySide6 UI (v1.0) and the local FastAPI service
-(v1.5) without duplication.
+ITOps Hub v1.5 is a layered desktop application with a Qt-free core, so the
+same business services power the PySide6 UI, the background scheduler, and
+the local FastAPI service without duplication.
 
-## Layers
+## Layers (as implemented)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ PRESENTATION                                                 │
 │  ┌───────────────────────┐        ┌───────────────────────┐ │
 │  │  PySide6 Desktop UI   │        │  FastAPI local API    │ │
-│  │  views · theme ·      │        │  (v1.5 — localhost,   │ │
-│  │  workers (QThread)    │        │   token auth)         │ │
+│  │  9 views · workers    │        │  (loopback, token     │ │
+│  │  (QThread) · theme    │        │   auth, OpenAPI)      │ │
 │  └──────────┬────────────┘        └───────────┬───────────┘ │
 └─────────────┼─────────────────────────────────┼─────────────┘
               ▼                                 ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ APPLICATION — AppContainer (composition root), use cases,   │
-│ background task orchestration, DTOs                          │
+│ APPLICATION — AppContainer (composition root, manual DI),   │
+│ SchedulerService (background rounds/snapshots/backups)      │
 └─────────────────────────────┬───────────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ SERVICES — system · network scan · monitoring · disk · logs │
-│ backup · alerts · reports · activity · settings · scheduler │
+│ SERVICES (business logic, framework-free)                    │
+│  SystemInfo · NetworkScan · Monitor · Disk · LogAnalysis ·   │
+│  Backup · Alerts · Reports · Export · Settings · Activity ·  │
+│  Snapshots · Scheduler                                      │
 └─────────────────────────────┬───────────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ DOMAIN — entities · validation · event bus · cancellation · │
-│ store Protocols (pure Python, no I/O)                        │
+│ DOMAIN (pure Python, no I/O)                                │
+│  entities · validation · Protocols · event bus ·            │
+│  cancellation · sanitization                                │
 └─────────────────────────────┬───────────────────────────────┘
                               ▼
-         ┌────────────────────（implements Protocols）────────┐
-         ▼ INFRASTRUCTURE                                    │
-           SQLAlchemy repositories (SQLite WAL, Alembic) ·    │
-           psutil/OS adapters · safe-subprocess ping/ARP ·    │
-           filesystem adapters · sanitizing logging           │
-         ▼                                                    │
-         SQLite · File System · OS APIs · Local network        │
+         ┌────────────（implements Protocols）─────────────┐
+         ▼ INFRASTRUCTURE                                 │
+           SQLAlchemy repositories (SQLite WAL, session-   │
+           per-operation) · Alembic migrations · psutil    │
+           adapters · safe-subprocess ping/ARP · rotating  │
+           sanitized logging · export writers              │
+         ▼                                                 │
+         SQLite · File System · OS APIs · Local network     │
 ```
 
-## Rules
+## Rules (enforced in review)
 
 1. **Dependency direction is inward only.** UI/API → application → services
-   → domain; infrastructure implements domain Protocols and is wired by the
-   composition root (`app/application/container.py`).
+   → domain; infrastructure implements domain Protocols and is wired once in
+   the composition root (`app/application/container.py`).
 2. **No business logic in UI widgets.** Views call services; services raise
-   domain errors; views translate them to user-facing messages.
+   domain errors; views translate them into user-facing messages.
 3. **No I/O in the domain.** Validators, entities, the event bus, and the
    cancel token are pure and unit-testable.
 4. **Services never import Qt or FastAPI.** They are synchronous and
-   cooperatively cancellable (`CancelToken`), so they run unchanged inside
-   QThread workers and API endpoints alike.
+   cooperatively cancellable (`CancelToken`), so the same service call runs
+   unchanged inside QThread workers, scheduler jobs, and API endpoints.
 5. **One stylesheet, two palettes.** All styling flows from
-   `app/ui/theme/tokens.py` (light/dark) through a single QSS document.
+   `app/ui/theme/tokens.py` (light/dark) through a single QSS document;
+   charts are themed from the same tokens.
 
-## Concurrency
+## Concurrency model
 
-- Long operations run in QThread workers (UI) or FastAPI's threadpool (API).
-- Fan-out work uses bounded `ThreadPoolExecutor`s inside services.
-- Monitoring is scheduler-driven: a tick submits checks to the pool, results
-  are persisted, and events are published on the thread-safe `EventBus`; the
-  UI bridges to the Qt main thread via queued signals.
+- Long operations run in QThread workers (`app/ui/workers/`) — scans,
+  monitor rounds, log analysis, backups, exports; the UI thread only
+  receives queued signals (never blocks).
+- Fan-out work uses bounded `ThreadPoolExecutor`s inside services
+  (scans, monitor rounds, scheduler jobs).
+- `SchedulerService` runs on its own daemon thread with 30s ticks:
+  per-device monitoring rounds, snapshot recording, retention pruning
+  (daily), and scheduled backup profiles. It never overlaps a job with
+  itself and survives individual job failures.
+- The FastAPI service runs standalone (`python -m app.api`) or embedded on
+  a daemon thread (opt-in via Settings); sync endpoints execute through
+  Starlette's threadpool onto the same services.
 
-## Data flow example (settings)
+## Database architecture
 
+- SQLite in WAL mode with foreign keys enforced; **session-per-operation**
+  repositories (thread-safe across UI, workers, scheduler, and API).
+- Schema: 7 tables (`devices`, `monitoring_results`, `system_snapshots`,
+  `backup_jobs`, `alerts`, `activity_logs`, `settings`) created by the
+  initial Alembic migration; the app runs `run_migrations()` at every
+  startup, so upgrades apply automatically.
+- Retention: snapshots and monitoring results older than
+  `retention_days` (default 30) are pruned on startup and daily by the
+  scheduler. See `docs/data-model.md`.
+
+## API integration (no duplicated logic)
+
+`create_app(container)` (in `app/api/app_factory.py`) receives the same
+`AppContainer` the desktop UI uses. Every endpoint delegates to a service
+method; the API layer adds only HTTP concerns: Pydantic request schemas,
+token middleware (`X-API-Token`, constant-time compare, exempting
+`/api/health` and the OpenAPI routes), and 400/404 error mapping.
+The UI and the API are therefore consistent by construction.
+
+## Data flow examples
+
+**Settings change**
 ```
-SettingsView (form) ──update(dict)──▶ SettingsService
-      SettingsService ──validate/merge──▶ AppSettings (Pydantic)
-      SettingsService ──save_raw(json)──▶ SettingRepository ──▶ SQLite
-      SettingsService ──publish──▶ EventBus[settings.changed] ──▶ UI/Alerts
-      SettingsService ──record──▶ ActivityLogService ──▶ audit trail
+SettingsView ──update(dict)──▶ SettingsService ──merge+validate──▶ AppSettings
+      └──save_raw(json)──▶ SettingRepository ──▶ SQLite
+      └──publish──▶ EventBus[settings.changed] ──▶ UI/alerts
+      └──record──▶ ActivityLogService ──▶ audit trail
 ```
 
-## Module map (current state)
+**Scheduled backup profile**
+```
+SchedulerService tick ── due? ──▶ BackupService.run_backup(source, dest)
+      ── walk + copy (cancel-aware) ──▶ manifest.json + verification
+      ──▶ backup_jobs row ──▶ EventBus[backup.completed] ──▶ audit trail
+```
 
-| Area | Status | Where |
-|---|---|---|
-| Composition root, container | v0.3 ✅ | `app/application/container.py` |
-| Settings model + service | v0.3 ✅ | `app/config/settings.py`, `app/services/settings_service.py` |
-| Snapshot persistence + retention | v0.4 ✅ | `app/services/snapshot_service.py` |
-| Activity/audit log | v0.3 ✅ | `app/services/activity_service.py` |
-| DB schema (all 7 tables) + migrations | v0.3 ✅ | `app/infrastructure/db/` |
-| Theme system (light/dark) | v0.3 ✅ | `app/ui/theme/` |
-| Shell + navigation + functional Settings page | v0.3 ✅ | `app/ui/main_window/`, `app/ui/views/` |
-| System info + Dashboard (KPIs, live chart, snapshots, retention) | v0.4 ✅ | `app/services/system_service.py`, `app/ui/views/dashboard_view.py` |
-| System inventory page | v0.4 ✅ | `app/ui/views/system_view.py` |
-| Network scanner (service + UI, authorization guard, cancel) | v0.5 ✅ | `app/services/network_scan_service.py`, `app/ui/views/network_view.py` |
-| Export service (CSV/JSON/TXT) | v0.5 ✅ | `app/services/export_service.py` |
-| Monitoring / Disk / Alerts | v0.6 (M5) | planned |
-| Log analyzer | v0.7 (M6) | planned |
-| Reports | v0.8 (M7) | planned |
-| Backup manager + scheduling | v1.2–v1.3 (M9) | planned |
-| Local FastAPI service | v1.5 (M10) | planned |
+**API scan request**
+```
+POST /api/network/scan ── token middleware ──▶ NetworkScanService.scan()
+      ── validate CIDR + authorization guard ──▶ ThreadPoolExecutor pings
+      ──▶ ARP/hostname enrichment ──▶ JSON payload (no UI involvement)
+```
 
-Full planning detail: `docs/planning/M1-discovery-and-architecture.md`.
+## Module map (current state — all implemented)
+
+| Area | Where |
+|---|---|
+| Composition root, container, retention | `app/application/container.py` |
+| Background scheduler | `app/services/scheduler_service.py` |
+| Settings model + service (import/export) | `app/config/settings.py`, `app/services/settings_service.py` |
+| Activity/audit log | `app/services/activity_service.py` |
+| System info + live metrics | `app/services/system_service.py`, `app/infrastructure/system/psutil_source.py` |
+| Snapshots + retention | `app/services/snapshot_service.py` |
+| Alerts lifecycle (raise/dedup/ack/resolve) | `app/services/alert_service.py` |
+| Disk thresholds | `app/services/disk_service.py` |
+| Monitoring (states, rounds, history) | `app/services/monitor_service.py` |
+| Network scanner (guard, cancel, export) | `app/services/network_scan_service.py`, `app/infrastructure/network/` |
+| Log analyzer (parser registry, anomalies) | `app/domain/loganalysis.py`, `app/services/log_analysis_service.py` |
+| Backups (verify, cancel-safe) | `app/services/backup_service.py` |
+| Reports + exports (CSV/JSON/TXT) | `app/services/report_service.py`, `app/services/export_service.py` |
+| Local API + token auth | `app/api/` |
+| Theme system (light/dark) | `app/ui/theme/` |
+| Shell + 9 views | `app/ui/main_window/`, `app/ui/views/` |
+| Workers (QThread bridges) | `app/ui/workers/` |
+
+Planning history and per-milestone detail: `docs/planning/`.
+Decisions: `docs/decisions.md` (19 ADRs).

@@ -140,11 +140,14 @@ endpoint group tested. Full reference: [docs/api.md](docs/api.md).
 ## Testing
 
 ```bash
-pytest                 # 282 tests (unit / integration / UI / API)
-pytest -m "not ui"     # skip Qt tests
+pytest                          # 282 tests (unit / integration / UI / API)
+pytest --ignore=tests/ui        # headless run (UI modules not collected)
 ruff format --check . && ruff check .   # lint gates
-mypy                   # strict types over the core layers
+mypy                            # strict types over the core layers
 ```
+
+`pytest -m "not ui"` also works but still *collects* the UI modules (they
+import PySide6) — prefer `--ignore=tests/ui` on headless machines.
 
 Strategy and suite map: [docs/testing.md](docs/testing.md).
 
@@ -185,10 +188,10 @@ selftest. Full procedure: [docs/deployment.md](docs/deployment.md).
 
 ## Known Limitations
 
-- Windows build workflow executes once the repository is pushed to GitHub
-  (owner decision AD-002) — spec, installer script, and workflow are ready.
 - Executables are unsigned → SmartScreen warns on first run (zero-cost
   budget); documented in deployment.md.
+- Screenshots are offscreen captures of the real UI with live data; native
+  Windows screenshots are a welcome contribution.
 - ICMP reachability uses the system `ping` (no admin rights needed);
   ICMP-filtered hosts appear offline (TCP probe is a roadmap item); MAC via
   ARP cache and hostnames via reverse DNS are best-effort (AD-009).

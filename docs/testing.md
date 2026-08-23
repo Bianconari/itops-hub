@@ -3,14 +3,20 @@
 ## Commands
 
 ```bash
-pytest                 # full suite (UI tests run offscreen)
-pytest -m "not ui"     # skip Qt widget tests
+pytest                          # full suite (UI offscreen), warning-clean
+pytest --ignore=tests/ui        # headless run — UI modules not collected
 pytest tests/unit      # domain + services with fakes
 pytest tests/api       # local FastAPI service (TestClient)
 ruff format --check . && ruff check .   # lint + format gates
 mypy                   # strict typing over domain/services/application
 python -m app.main --selftest          # headless core verification
 ```
+
+`pytest -m "not ui"` deselects UI tests but still *collects* them (PySide6
+import required) — use `--ignore=tests/ui` on headless machines. The suite
+runs warning-clean; the single filtered warning is a third-party
+fastapi/starlette import notice, matched narrowly by message in
+`pyproject.toml` with the reason documented inline.
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push and PR
 across ubuntu-latest (py3.12, py3.13) and windows-latest (py3.12).

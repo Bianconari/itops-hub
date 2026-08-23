@@ -18,7 +18,7 @@ settings              (single JSON document, key = "app.settings")
 
 ## Tables
 
-### devices — ping-monitored endpoints (v0.6 UI; table live since v0.3)
+### devices — ping-monitored endpoints (live since v0.6)
 | Column | Type | Constraints / Notes |
 |---|---|---|
 | id | INTEGER | PK |
@@ -30,7 +30,7 @@ settings              (single JSON document, key = "app.settings")
 | timeout_ms | INTEGER | NOT NULL, default 1500 |
 | created_at / updated_at | DATETIME | NOT NULL (UTC) |
 
-### monitoring_results — one check per device (v0.6)
+### monitoring_results — one check per device (live since v0.6)
 | Column | Type | Notes |
 |---|---|---|
 | id | INTEGER | PK |
@@ -49,12 +49,12 @@ settings              (single JSON document, key = "app.settings")
 | memory_percent | REAL | NULL allowed |
 | disk_percent | REAL | NULL allowed; highest usage across volumes |
 
-### backup_jobs — backup executions (v1.2)
+### backup_jobs — backup executions (live since v1.2)
 id PK · source TEXT · destination TEXT · started_at · completed_at NULL ·
 status CHECK ∈ `running`/`success`/`verified`/`failed`/`cancelled` ·
 size_bytes · files_copied · checksum_verified · error_message NULL
 
-### alerts — threshold/state alerts (raise/ack arrive v0.6)
+### alerts — threshold/state alerts (full lifecycle live since v0.6)
 id PK · type TEXT · severity CHECK ∈ `info`/`warning`/`critical` · source
 TEXT · message TEXT · created_at (indexed) · acknowledged BOOLEAN default 0 ·
 acknowledged_at NULL
@@ -70,8 +70,8 @@ key TEXT PK (`app.settings`) · value TEXT (JSON of `AppSettings`) · updated_at
 
 `SnapshotService.apply_retention(days)` prunes `system_snapshots` older than
 the configured `retention_days` (default 30) on every application start.
-Monitoring results join the same rule when the module lands (v0.6); alerts
-and audit logs keep 90 days by default from v1.4.
+Monitoring results follow the same rule (live since v0.6); alerts and audit
+logs keep 90 days by default from v1.4.
 
 ## PostgreSQL path (v2.x)
 

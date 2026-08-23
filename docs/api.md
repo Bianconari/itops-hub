@@ -15,8 +15,9 @@ python -m app.api [--host 127.0.0.1] [--port 8756]
 ```
 
 Defaults come from Settings (`api.host`, `api.port`; loopback only).
-The startup banner prints the session token, which is also written to the
-`api-token` file in the data directory (`%LOCALAPPDATA%\ITOpsHub`).
+The startup banner prints the session token; the `api-token` file in the
+data directory (`%LOCALAPPDATA%\ITOpsHub`) is written whenever the API
+starts — standalone **or** embedded via Settings.
 
 Interactive OpenAPI documentation: **http://127.0.0.1:8756/docs**
 
@@ -50,7 +51,7 @@ Interactive OpenAPI documentation: **http://127.0.0.1:8756/docs**
 | DELETE | `/api/monitoring/devices/{id}?confirm=true` | Delete device + history |
 | POST | `/api/monitoring/check` | Check all enabled devices now |
 | POST | `/api/logs/analyze` | Body: `{path}` — analyze a log file |
-| POST | `/api/backups` | Body: `{source, destination, verify}` — run a backup |
+| POST | `/api/backups` | Body: `{source, destination, verify_mode}` where mode is `none`/`size`/`sha256` (`verify: bool` still accepted) |
 | GET | `/api/backups` | Backup history |
 | GET | `/api/alerts?limit=50` | Alerts + open count |
 | POST | `/api/alerts/{id}/ack` | Body: `{"confirm": true}` |

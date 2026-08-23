@@ -71,8 +71,9 @@ CSV/JSON/TXT.
 
 Choose a **source** (folder or file) and a **destination**, then **Run
 backup**. Copies land in a fresh timestamped folder — your originals are
-never modified or deleted. Verification compares every copied file against
-a written manifest. Cancelling removes only the partial copy it created.
+never modified or deleted. Verification is selectable: **Sizes & count** (fast), **SHA-256**
+(thorough — recomputes per-file hashes), or **None**; a failed
+verification marks the job FAILED, never silently successful. Cancelling removes only the partial copy it created.
 Save **profiles** to schedule backups (e.g. every 24 h) — the background
 scheduler runs them automatically while the app is open.
 
@@ -86,8 +87,8 @@ metadata headers. Previously generated files are listed for quick access.
 
 Settings → *Local API* enables a loopback-only FastAPI service sharing the
 same engine (docs at `http://127.0.0.1:<port>/docs`). It requires the
-per-session token from `%LOCALAPPDATA%\ITOpsHub\api-token`. See
-`docs/api.md`.
+per-session token from `%LOCALAPPDATA%\ITOpsHub\api-token` (written
+whenever the API starts — embedded or standalone). See `docs/api.md`.
 
 ## Settings
 
