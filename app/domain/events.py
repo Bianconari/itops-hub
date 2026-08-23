@@ -26,9 +26,9 @@ class Topics:
     APP_STARTED = "app.started"
     APP_STOPPED = "app.stopped"
     SCAN_COMPLETED = "scan.completed"
-    # Future topics (land with their milestones):
-    #   monitor.result       (v0.6)  ping monitor result persisted
-    #   alert.raised         (v0.6)
+    MONITOR_RESULT = "monitor.result"
+    ALERT_RAISED = "alert.raised"
+    BACKUP_COMPLETED = "backup.completed"
 
 
 @dataclass(frozen=True)

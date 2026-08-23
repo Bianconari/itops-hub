@@ -64,7 +64,7 @@ class TestSettingsRoundtrip:
 
         session = container.new_session()
         try:
-            fresh = SettingsService(SettingRepository(session), EventBus())
+            fresh = SettingsService(SettingRepository(lambda: session), EventBus())
             settings = fresh.get()
             assert settings.theme.value == "dark"
             assert settings.disk.warning_percent == 70

@@ -16,7 +16,7 @@ class TestSystemSnapshotRepository:
     def test_add_and_query_range_orders_oldest_first(self, container: AppContainer):
         session = container.new_session()
         try:
-            repo = SystemSnapshotRepository(session)
+            repo = SystemSnapshotRepository(lambda: session)
             now = utc_now()
             newer = repo.add(_snap(now, 10, 20, 30))
             older = repo.add(_snap(now - timedelta(seconds=5), 1, 2, 3))
@@ -30,7 +30,7 @@ class TestSystemSnapshotRepository:
     def test_prune_older_than(self, container: AppContainer):
         session = container.new_session()
         try:
-            repo = SystemSnapshotRepository(session)
+            repo = SystemSnapshotRepository(lambda: session)
             now = utc_now()
             repo.add(_snap(now - timedelta(days=40), 1, 1, 1))
             repo.add(_snap(now - timedelta(days=1), 2, 2, 2))
@@ -71,7 +71,7 @@ class TestSnapshotServiceIntegration:
         try:
             session = first.new_session()
             try:
-                repo = SystemSnapshotRepository(session)
+                repo = SystemSnapshotRepository(lambda: session)
                 old = utc_now() - timedelta(days=60)
                 repo.add(_snap(old, 1, 1, 1))
             finally:
@@ -106,7 +106,7 @@ class TestAlertRepository:
                 ]
             )
             session.commit()
-            alerts = AlertRepository(session).recent(limit=10)
+            alerts = AlertRepository(lambda: session).recent(limit=10)
         finally:
             session.close()
 

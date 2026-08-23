@@ -45,6 +45,8 @@ class MonitoringSettings(BaseModel):
 
     interval_seconds: int = Field(default=30, ge=5, le=3600)
     timeout_ms: int = Field(default=1500, ge=100, le=10000)
+    #: Reachable but slower than this counts as a Warning state.
+    latency_warning_ms: int = Field(default=200, ge=10, le=5000)
 
 
 class SnapshotSettings(BaseModel):

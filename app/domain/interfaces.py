@@ -31,9 +31,17 @@ class ActivityStore(Protocol):
 
 
 class AlertStore(Protocol):
-    """Persistence for raised alerts (read path; raise/ack land in v0.6)."""
+    """Persistence for raised alerts."""
+
+    def add(self, alert: AlertRecord) -> AlertRecord: ...
 
     def recent(self, limit: int = 100) -> list[AlertRecord]: ...
+
+    def unacknowledged(self, limit: int = 100) -> list[AlertRecord]: ...
+
+    def find_unacknowledged(self, alert_type: str, source: str) -> AlertRecord | None: ...
+
+    def acknowledge(self, alert_id: int) -> bool: ...
 
 
 class SystemMetricsSource(Protocol):

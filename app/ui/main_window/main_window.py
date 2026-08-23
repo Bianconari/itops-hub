@@ -17,7 +17,9 @@ from app import __version__
 from app.application.container import AppContainer
 from app.ui.main_window.sidebar import Sidebar
 from app.ui.theme.theme_service import ThemeService
+from app.ui.views.alerts_view import AlertsView
 from app.ui.views.dashboard_view import DashboardView
+from app.ui.views.monitoring_view import MonitoringView
 from app.ui.views.network_view import NetworkView
 from app.ui.views.placeholder_page import PlaceholderPage
 from app.ui.views.settings_view import SettingsView
@@ -28,20 +30,15 @@ _PAGES: list[tuple[str, str, str | None]] = [
     ("dashboard", "Dashboard", None),  # implemented (v0.4)
     ("system", "System", None),  # implemented (v0.4)
     ("network", "Network", None),  # implemented (v0.5)
-    ("monitoring", "Monitoring", "v0.6 (M5)"),
+    ("monitoring", "Monitoring", None),  # implemented (v0.6)
     ("logs", "Logs", "v0.7 (M6)"),
     ("backups", "Backups", "v1.2 (M9)"),
     ("reports", "Reports", "v0.8 (M7)"),
-    ("alerts", "Alerts", "v0.6 (M5)"),
+    ("alerts", "Alerts", None),  # implemented (v0.6)
     ("settings", "Settings", None),  # implemented
 ]
 
 _PAGE_DESCRIPTIONS: dict[str, str] = {
-    "monitoring": (
-        "Add devices (name / host / interval / timeout) and track online, "
-        "offline, and warning states with response times, failure counts, "
-        "last-seen, and persisted history with time-range charts."
-    ),
     "logs": (
         "Load and analyze log files through a pluggable parser registry: level "
         "counts, most repeated errors, timestamp patterns, and basic anomaly "
@@ -55,10 +52,6 @@ _PAGE_DESCRIPTIONS: dict[str, str] = {
     "reports": (
         "Export scans, monitoring history, disk usage, log analyses, alerts, "
         "and activity to CSV, JSON, and TXT with metadata headers."
-    ),
-    "alerts": (
-        "Alert inbox for threshold breaches and device state changes, with "
-        "severity levels, acknowledgement, and history."
     ),
 }
 
@@ -98,6 +91,10 @@ class MainWindow(QMainWindow):
                 page = SystemView(container, theme_service)
             elif page_id == "network":
                 page = NetworkView(container)
+            elif page_id == "monitoring":
+                page = MonitoringView(container, theme_service)
+            elif page_id == "alerts":
+                page = AlertsView(container, theme_service)
             else:
                 page = SettingsView(container)
             self._pages[page_id] = page
@@ -116,6 +113,7 @@ class MainWindow(QMainWindow):
         for page_id, shutdown_owner in (
             ("dashboard", DashboardView),
             ("network", NetworkView),
+            ("monitoring", MonitoringView),
         ):
             page = self._pages.get(page_id)
             if isinstance(page, shutdown_owner):
