@@ -19,6 +19,7 @@ from app.ui.main_window.sidebar import Sidebar
 from app.ui.theme.theme_service import ThemeService
 from app.ui.views.alerts_view import AlertsView
 from app.ui.views.dashboard_view import DashboardView
+from app.ui.views.logs_view import LogsView
 from app.ui.views.monitoring_view import MonitoringView
 from app.ui.views.network_view import NetworkView
 from app.ui.views.placeholder_page import PlaceholderPage
@@ -31,7 +32,7 @@ _PAGES: list[tuple[str, str, str | None]] = [
     ("system", "System", None),  # implemented (v0.4)
     ("network", "Network", None),  # implemented (v0.5)
     ("monitoring", "Monitoring", None),  # implemented (v0.6)
-    ("logs", "Logs", "v0.7 (M6)"),
+    ("logs", "Logs", None),  # implemented (v0.7)
     ("backups", "Backups", "v1.2 (M9)"),
     ("reports", "Reports", "v0.8 (M7)"),
     ("alerts", "Alerts", None),  # implemented (v0.6)
@@ -39,11 +40,6 @@ _PAGES: list[tuple[str, str, str | None]] = [
 ]
 
 _PAGE_DESCRIPTIONS: dict[str, str] = {
-    "logs": (
-        "Load and analyze log files through a pluggable parser registry: level "
-        "counts, most repeated errors, timestamp patterns, and basic anomaly "
-        "indicators — with no single hardcoded log format."
-    ),
     "backups": (
         "Local backups of selected files/folders with timestamped naming, "
         "progress, verification, and explicit confirmation for destructive "
@@ -95,6 +91,8 @@ class MainWindow(QMainWindow):
                 page = MonitoringView(container, theme_service)
             elif page_id == "alerts":
                 page = AlertsView(container, theme_service)
+            elif page_id == "logs":
+                page = LogsView(container)
             else:
                 page = SettingsView(container)
             self._pages[page_id] = page
@@ -114,6 +112,7 @@ class MainWindow(QMainWindow):
             ("dashboard", DashboardView),
             ("network", NetworkView),
             ("monitoring", MonitoringView),
+            ("logs", LogsView),
         ):
             page = self._pages.get(page_id)
             if isinstance(page, shutdown_owner):

@@ -18,6 +18,7 @@ from typing import Any, Literal
 from app import __version__
 from app.config.paths import AppPaths
 from app.config.settings import AppSettings
+from app.domain.loganalysis import LogSummary
 from app.domain.network import ScanResult
 from app.domain.time_utils import utc_now
 from app.services.activity_service import ActivityLogService
@@ -72,6 +73,30 @@ class ExportService:
             "cancelled": result.cancelled,
         }
         return self._write("network-scan", fmt, metadata, _SCAN_HEADERS, rows)
+
+    # ------------------------------------------------------------ logs
+    def export_log_analysis(self, summary: LogSummary, fmt: ExportFormat) -> Path:
+        """Write a log-analysis summary report."""
+        headers = ("level", "count")
+        rows = [{"level": level, "count": count} for level, count in summary.counts.items()]
+        metadata = {
+            "report": "log-analysis",
+            "parser": summary.parser_name,
+            "total_lines": summary.total_lines,
+            "parsed_lines": summary.parsed_lines,
+            "errors": summary.error_count,
+            "first_timestamp": summary.first_timestamp.isoformat()
+            if summary.first_timestamp
+            else None,
+            "last_timestamp": summary.last_timestamp.isoformat()
+            if summary.last_timestamp
+            else None,
+            "anomalies": "; ".join(summary.anomalies) or "none",
+            "top_errors": [
+                {"count": count, "message": message} for count, message in summary.top_errors
+            ],
+        }
+        return self._write("log-analysis", fmt, metadata, headers, rows)
 
     # ------------------------------------------------------------ core
     def _write(
