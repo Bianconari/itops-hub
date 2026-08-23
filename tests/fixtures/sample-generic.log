@@ -1,0 +1,8 @@
+startup complete
+INFO cache warmed in 320ms
+user 42 logged in
+ERROR query timeout after 5000ms
+ERROR query timeout after 5000ms
+WARNING disk queue depth 12
+something entirely different here
+CRITICAL node fs-2 marked offline by supervisor

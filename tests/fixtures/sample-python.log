@@ -1,0 +1,18 @@
+2026-08-20 09:00:00,110 INFO     web.server Starting application on port 8080
+2026-08-20 09:00:01,204 INFO     db.pool Connection pool initialized (size=20)
+2026-08-20 09:00:05,312 WARNING  web.tls Certificate expires in 12 days
+2026-08-20 09:01:00,450 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:01,455 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:02,460 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:03,470 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:04,480 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:05,490 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:06,500 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:07,510 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:08,520 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:09,530 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:01:10,540 ERROR    auth.login Login failed for user=admin from 10.0.0.42
+2026-08-20 09:02:00,000 INFO     web.server Health check OK
+2026-08-20 12:34:56,789 CRITICAL db.deadlock Deadlock detected on table sessions id=4471
+not a log line at all
+2026-08-20 12:35:10,001 WARNING  db.pool Pool saturation at 85%

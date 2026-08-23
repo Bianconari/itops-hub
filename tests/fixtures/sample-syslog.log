@@ -1,0 +1,7 @@
+Aug 23 08:00:01 gw01 systemd[1]: Started Daily apt upgrade timer.
+Aug 23 08:00:02 gw01 CRON[812]: (root) CMD (/usr/local/bin/backup.sh)
+Aug 23 08:00:09 gw01 sshd[820]: Failed password for invalid user admin from 203.0.113.5 port 51234 ssh2
+Aug 23 08:00:10 gw01 sshd[820]: Failed password for invalid user admin from 203.0.113.5 port 51235 ssh2
+Aug 23 08:05:00 gw01 kernel: [UFW BLOCK] IN=eth0 SRC=198.51.100.7 DPT=23
+Aug 23 08:10:41 gw01 systemd[1]: backup.service: Failed with result 'exit-code'.
+Aug 23 09:00:00 gw01 dhclient[441]: DHCPREQUEST on eth0 to 10.0.0.1 port 67

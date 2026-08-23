@@ -31,6 +31,9 @@ reports/*
 *.log
 *.log.*
 
+# Test fixtures are intentionally tracked despite being .log files
+!tests/fixtures/*.log
+
 # --- Environment / secrets ---
 # This project stores no secrets; .env exists only for local dev overrides.
 .env
