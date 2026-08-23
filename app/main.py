@@ -52,6 +52,32 @@ def run_selftest() -> int:
     return 0
 
 
+def start_embedded_api(container):
+    """Run the local API on a daemon thread (opt-in via Settings)."""
+    import threading
+
+    import uvicorn
+
+    from app.api.app_factory import create_app
+
+    settings = container.settings_service.get()
+    config = uvicorn.Config(
+        create_app(container),
+        host=settings.api.host,
+        port=settings.api.port,
+        log_level="warning",
+    )
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, name="itops-api", daemon=True)
+    thread.start()
+    container.activity_service.record(
+        "api.started",
+        module="api",
+        message=f"http://{settings.api.host}:{settings.api.port}",
+    )
+    return server
+
+
 def run_desktop() -> int:
     """Launch the desktop application."""
     from PySide6.QtWidgets import QApplication

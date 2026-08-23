@@ -6,9 +6,75 @@ versioning follows [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
-### Planned next (v0.6 / M5)
-- Ping monitor: device CRUD, scheduled checks, online/offline/warning states, history
-- Disk monitor alerts + alerts lifecycle (raise, acknowledge)
+### Future (v2.x roadmap)
+- Web dashboard, remote monitoring agents, PostgreSQL, authentication
+
+## [1.5.0] — 2026-08-23 — Stable Local API Release (M10)
+
+### Added
+- **Local FastAPI service** (`app/api`): loopback-only by default, opt-in
+  embedded start (Settings) or standalone `python -m app.api`; per-session
+  32-byte token (`X-API-Token`, constant-time compare) on every route except
+  `/api/health`; confirmation semantics on destructive operations; OpenAPI
+  docs at `/docs`; 17 endpoint groups covering system, network, monitoring,
+  logs, backups, alerts, reports, and activity — all through the same
+  service layer the UI uses (verified live + 25 API tests)
+- Production packaging: windowed onedir PyInstaller spec, Inno Setup
+  installer script, CI builds exe + installer and runs the packaged selftest
+- Complete documentation set: `api.md`, `security.md` (v1.5 review record),
+  `testing.md`, `deployment.md`, `user-guide.md`; three new ADRs
+  (AD-017–019); README rewritten for v1.5
+- Session-per-operation repositories hardened across all stores (AD-019)
+
+## [1.3.0] — 2026-08-23 — Scheduling (M9)
+
+### Added
+- `SchedulerService`: headless interval scheduler (30s ticks) — per-device
+  monitoring rounds, snapshot recording, retention pruning (daily), and
+  scheduled backup profiles; started/stopped with the application
+- Backup profiles persisted in settings with enable/disable and delete
+
+## [1.2.0] — 2026-08-23 — Backup Manager (M9)
+
+### Added
+- `BackupService` + `backup_jobs` persistence: timestamped never-overwritten
+  destinations, manifest verification (size/count), cooperative cancel that
+  removes only its own partial copy, source/destination layout safety rules,
+  audit logging and events
+- Backups page: run with progress (files/MB), cancel, verification toggle,
+  history table, scheduled-profile management
+- Settings export/import (JSON) with validation and confirmation
+
+## [0.8.0] — 2026-08-23 — Reports (M7)
+
+### Added
+- `ReportService` with six datasets: monitoring history, per-device latency,
+  alerts, activity/audit, disk usage, system snapshots — time ranges
+  (1h/24h/7d) and CSV/JSON/TXT output through the shared export service
+- Reports page with dataset/range/format controls and recent-exports list
+
+## [0.7.0] — 2026-08-23 — Log Analyzer (M6)
+
+### Added
+- Pluggable parser registry with confidence-based auto-detection:
+  Python-logging, syslog (severity-inferred), and generic level-tag fallback
+- `LogAnalysisService`: streaming chunked analysis (bounded memory),
+  progress + cancellation, level counts, normalized top-error grouping,
+  timestamp spans, anomaly detection (error bursts, logging gaps)
+- Logs page with file picker, progress, summary, top-errors table, and
+  export; sample fixtures for three formats
+
+## [0.6.0] — 2026-08-23 — Monitoring, Disk Alerts, Alerts Lifecycle (M5)
+
+### Added
+- Device CRUD with validation; `MonitorService` state machine
+  (online/offline/warning-by-latency), concurrent rounds, consecutive-failure
+  tracking, persisted history with retention
+- `AlertService` lifecycle: deduplicated raise, auto-resolve on recovery,
+  acknowledge; `DiskService` threshold alerts with auto-ack on clearance
+- Monitoring page (devices table, check-now, auto-check, latency history
+  chart, disk volumes card) and Alerts page (filters, acknowledge)
+- Repositories moved to session-per-operation for thread safety (AD-019)
 
 ## [0.5.0] — 2026-08-23 — Network Scanner (M4)
 

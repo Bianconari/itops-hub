@@ -2,219 +2,204 @@
 
 **Modular desktop IT operations platform** — system diagnostics, network
 discovery, connectivity monitoring, log analysis, disk monitoring, backup
-operations, reporting, and automation in a single modern desktop application.
+operations, reporting, scheduling, and a local API in a single modern
+desktop application.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
+![Tests](https://img.shields.io/badge/tests-282%20passing-brightgreen)
 
-> **Current state: v0.5 (M4 — Network Scanner).** Architecture,
-> database, settings, audit logging, theming, live dashboard, System page,
-> and the **Network scanner** (concurrent authorized CIDR scans with
-> progress, cancellation, hostname + best-effort MAC lookup, and CSV/JSON/TXT
-> export) are real and tested (192 automated tests).
-> Feature modules land milestone by milestone — see
-> [Project Roadmap](#project-roadmap). Pages not yet implemented are labeled
-> in-app with the exact version where they arrive; there are no mock
-> features.
+> **Current state: v1.5 — Stable Local API Release.** All nine modules are
+> real and tested: Dashboard, System, Network scanner, Monitoring, Logs,
+> Backups, Reports, Alerts, Settings — plus a loopback-only FastAPI service
+> sharing the exact same core. 282 automated tests; no mock features; every
+> page that says it does something actually does it.
 
 ## Overview
 
 ITOps Hub gives IT administrators one offline-first Windows desktop tool for
 day-to-day operations: checking system health, scanning networks they own,
 monitoring device connectivity, watching disk usage, analyzing logs,
-creating safe local backups, and exporting reports. It is built to later
-grow into a web and multi-device platform (v2.x) without rewriting its core.
+creating safe local backups, and exporting reports. The layered,
+service-oriented core is built to grow into a web and multi-device platform
+(v2.x) without rewriting the application.
 
 ## Problem
 
 Everyday IT operations work is scattered across CLIs, one-off scripts,
 browser tabs, and disposable tools. ITOps Hub consolidates the common local
 workflow — diagnose, discover, monitor, analyze, back up, report — behind a
-consistent, tested, offline-capable desktop interface with a persistent
-local history and an auditable activity trail.
+consistent, tested, offline-capable desktop interface with persistent local
+history, an alert lifecycle, scheduled jobs, and an auditable activity
+trail.
 
 ## Features
 
 | Module | What it does | Status |
 |---|---|---|
-| Dashboard | KPI cards, live charts, health summary, recent alerts/activity | **v0.4 ✅** |
-| System | Hostname, OS, CPU, RAM, storage, adapters, IPs, uptime | **v0.4 ✅** |
-| Network | Authorized CIDR scanning with progress, cancel, export | **v0.5 ✅** |
-| Monitoring | Ping monitors with states, latency history, alerts | v0.6 (M5) |
-| Disk | Drive usage with configurable warning/critical thresholds | v0.6 (M5) |
-| Logs | Pluggable log parsing, level counts, anomalies | v0.7 (M6) |
-| Reports | CSV / JSON / TXT exports with metadata | v0.8 (M7) |
-| Backups | Verified local backups, non-destructive by design | v1.2 (M9) |
-| Local API | FastAPI service (localhost, token auth, OpenAPI) | v1.5 (M10) |
-| Settings | Themes, thresholds, intervals, retention, export dir | **v0.3 ✅** |
-| Activity log | Audit trail of application actions | **v0.3 ✅** |
+| Dashboard | KPI cards, live CPU/RAM/disk chart, health summary, alerts & activity feeds | ✅ |
+| System | Hostname, OS, CPU, RAM, storage volumes, adapters, IPs, uptime | ✅ |
+| Network | Authorized CIDR scanning: concurrent checks, progress, cancel, hostname + ARP MAC, export | ✅ |
+| Monitoring | Device CRUD, online/offline/warning states, latency history, auto-checks, scheduler | ✅ |
+| Disk | Per-volume usage, configurable warn/crit thresholds, alert lifecycle | ✅ |
+| Logs | Auto-detected parsers (Python logging / syslog / generic), level counts, top errors, anomaly flags | ✅ |
+| Backups | Timestamped copies, manifest verification, cancel-safe, schedulable profiles | ✅ |
+| Reports | Six datasets → CSV/JSON/TXT with metadata; never overwrites | ✅ |
+| Alerts | Deduplicated raise/resolve, acknowledge, filters | ✅ |
+| Local API | Loopback FastAPI + OpenAPI, per-session token, same core services | ✅ |
+| Settings | Themes, thresholds, retention, scanner limits, API, backup profiles, import/export | ✅ |
 
 ## Screenshots
 
-| Dashboard — live KPIs & chart (light) | Dashboard (dark) |
+| Dashboard — live data | Monitoring — devices & disks |
 |---|---|
-| ![](docs/screenshots/m4-dashboard-light.png) | ![](docs/screenshots/m4-dashboard-dark.png) |
+| ![](docs/screenshots/v15-dashboard.png) | ![](docs/screenshots/v15-monitoring.png) |
 
-| System inventory (dark) | Network scanner (light) |
+| Network scanner | System inventory |
 |---|---|
-| ![](docs/screenshots/m4-system-dark.png) | ![](docs/screenshots/m5-network-light.png) |
+| ![](docs/screenshots/m5-network-light.png) | ![](docs/screenshots/m4-system-dark.png) |
 
-Real offscreen captures of the running application (v0.5) with live
-psutil data — no mock data.
+Real captures of the running application (offscreen renders with live
+psutil data and seeded demo devices at capture time — no fake widgets).
 
 ## Architecture
 
-Layered, Qt-free core; UI and (later) FastAPI share one service layer:
+Layered, Qt-free core; UI and FastAPI share one service layer — no
+duplicated business logic:
 
 ```
-Desktop UI (PySide6)          FastAPI (v1.5, localhost)
+Desktop UI (PySide6)          Local API (FastAPI, loopback)
         └──────────┬────────────────┘
-           Application layer (container, use cases)
-                   Service layer (business logic)
+           Application layer (container, scheduler, use cases)
+                   Service layer (9 business services)
                    Domain (entities, validation, Protocols)
-                   Infrastructure (SQLite, OS, files, logging)
+                   Infrastructure (SQLite WAL, psutil, safe ping, files)
 ```
 
-Details and rules: [docs/architecture.md](docs/architecture.md) ·
-Decisions: [docs/decisions.md](docs/decisions.md)
+Details: [docs/architecture.md](docs/architecture.md) ·
+Decisions (19 ADRs): [docs/decisions.md](docs/decisions.md)
 
 ## Technology Stack
 
-- **Python 3.11+** (3.12/3.13 in CI) · **PySide6** for the desktop UI
+- **Python 3.11+** (3.12/3.13 in CI) · **PySide6** desktop UI
 - **SQLAlchemy 2.0 + Alembic** over **SQLite** (WAL) — PostgreSQL-ready
-- **Pydantic v2** for settings and (later) API schemas
-- **PyQtGraph** for live charts (lands v0.4)
-- **FastAPI + uvicorn** for the local API (v1.5, opt-in, loopback-only)
-- **psutil** for system metrics; system `ping` subprocess for reachability
-- **pytest / pytest-qt / httpx** for testing; **ruff + mypy strict** for quality
-- **PyInstaller** (+ GitHub Actions `windows-latest`) for packaging
+- **Pydantic v2** (settings + API schemas) · **PyQtGraph** live charts
+- **FastAPI + uvicorn** local API · **psutil** metrics
+- System `ping` subprocess (list args, `shell=False`, no admin rights)
+- **pytest / pytest-qt / httpx** tests · **ruff + mypy strict** quality gates
+- **PyInstaller + Inno Setup** packaging (GitHub Actions windows-latest)
 
 ## Installation
 
-**Prerequisites:** Python 3.11+ (3.12/3.13 recommended) and Git.
+**Prerequisites:** Python 3.11+ and Git.
 
 ```bash
 git clone <repository-url>
 cd itops-hub
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Linux/macOS:
-source .venv/bin/activate
+# Windows:      .venv\Scripts\activate
+# Linux/macOS:  source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-(Or run `scripts/run_dev.sh` on Linux/macOS, which does all of the above.)
+(Or `scripts/run_dev.sh` on Linux/macOS.)
 
 ## Running the Application
 
 ```bash
 python -m app.main              # desktop application
+python -m app.api               # standalone local API (loopback)
 python -m app.main --version    # print version
-python -m app.main --selftest   # headless core verification (no GUI)
+python -m app.main --selftest   # headless core verification (CI/packaged)
 ```
 
-First launch creates the runtime data directory automatically:
-- Windows: `%LOCALAPPDATA%\ITOpsHub` (database + logs)
-- Linux/macOS: XDG data dir (`~/.local/share/ITOpsHub`)
-- Override for development via `ITOPS_HUB_DATA_DIR` (see `.env.example`)
+First launch creates `%LOCALAPPDATA%\ITOpsHub` (database + logs); exports
+default to `Documents\ITOpsHub`. Override for development with
+`ITOPS_HUB_DATA_DIR` (see `.env.example`).
 
 ## Configuration
 
-All configuration lives in the local SQLite settings store and is edited in
-the in-app **Settings** page (theme, log level, monitoring defaults, disk
-thresholds, retention, export directory, notification preferences, scanner
-options). No secrets are used or stored anywhere; `.env.example` documents
-the single development override (`ITOPS_HUB_DATA_DIR`).
+All configuration is edited in the in-app **Settings** page and stored as a
+validated JSON document in SQLite: theme, log level, monitoring defaults,
+snapshot interval, disk thresholds, retention, scan limits, export folder,
+notifications, local API, and backup profiles. Settings export/import as
+JSON for machine transfers. No secrets exist anywhere in the app.
 
 ## Modules
 
-See the [Features](#features) table above and the in-app sidebar (Dashboard,
-System, Network, Monitoring, Logs, Backups, Reports, Alerts, Settings).
-Unimplemented pages state the milestone in which they arrive.
+See the [Features](#features) table; each module has a user-facing guide in
+[docs/user-guide.md](docs/user-guide.md).
 
 ## API
 
-The local FastAPI service ships in **v1.5 (M10)**: localhost-only, opt-in,
-token-guarded, with OpenAPI docs at `/docs`. The service layer it will share
-with the UI is already in place — see `docs/architecture.md`.
+Opt-in local FastAPI service (Settings → Local API, or `python -m app.api`):
+loopback-only, per-session token auth, OpenAPI docs at `/docs`, every
+endpoint group tested. Full reference: [docs/api.md](docs/api.md).
 
 ## Testing
 
 ```bash
-pytest                 # full suite (UI tests run offscreen)
+pytest                 # 282 tests (unit / integration / UI / API)
 pytest -m "not ui"     # skip Qt tests
-pytest tests/unit      # layer-specific runs: tests/integration, tests/ui
+ruff format --check . && ruff check .   # lint gates
+mypy                   # strict types over the core layers
 ```
 
-Quality gates (all must pass, enforced in CI):
-
-```bash
-ruff format --check .
-ruff check .
-mypy                    # strict, over domain/services/application
-python -m app.main --selftest
-```
+Strategy and suite map: [docs/testing.md](docs/testing.md).
 
 ## Build & Release
 
-The Windows build runs on GitHub Actions (`build-windows.yml`) on
-`windows-latest`:
-
-```bash
-pip install -r requirements.txt -r requirements-dev.txt
-pyinstaller itopshub.spec --noconfirm     # -> dist/ITOpsHub/ITOpsHub.exe
-dist/ITOpsHub/ITOpsHub.exe --selftest     # packaged smoke test
+```powershell
+pyinstaller itopshub.spec --noconfirm   # -> dist\ITOpsHub\ITOpsHub.exe
+iscc scripts\installer.iss              # -> dist\ITOpsHub-Setup.exe
 ```
 
-An Inno Setup installer (`ITOpsHub-Setup.exe`) is added at the v1.0/v1.5
-packaging milestones. Details: `docs/deployment.md` (added at v1.0).
+CI builds both on `windows-latest` for every `v*` tag and runs the packaged
+selftest. Full procedure: [docs/deployment.md](docs/deployment.md).
 
 ## Security
 
-- Security by design: validated inputs, no `shell=True`, bounded subprocess
-  timeouts, path validation, authorization guard on network scanning.
-- Credentials are sanitized out of all logs (defense-in-depth); no secrets
-  exist in the application or repository (CI secret scanning enabled).
-- Local-only by default: no telemetry, no cloud upload, loopback-only API.
-- See `docs/security.md` (published at v1.5 security review).
+- Validated inputs everywhere; subprocess with argument lists, never
+  `shell=True`; path safety rules for backups/exports
+- Authorization guard on network scanning; scan size caps
+- Loopback-only API with per-session tokens + confirmation semantics
+- Sanitized logging & audit trail; no credentials by design; no telemetry
+- Full review record: [docs/security.md](docs/security.md)
 
 ## Project Roadmap
 
-| Version | Scope |
-|---|---|
-| v0.1–v0.2 | Planning & architecture ✅ |
-| v0.3 | Core setup: repo, CI, DB, settings, theming, shell ✅ |
-| v0.4 | System module + Dashboard (live charts, snapshots, retention) ✅ |
-| v0.5 | Network scanner + first export service | ✅ |
-| v0.5 | Network scanner |
-| v0.6 | Monitoring + Disk + Alerts |
-| v0.7 | Log analyzer |
-| v0.8 | Reports |
-| v1.0 | Desktop MVP (packaged, hardened) |
-| v1.1–v1.3 | Monitoring improvements, backups, scheduling |
-| v1.4–v1.5 | Hardening + stable local API release |
-| v2.x+ | Web dashboard, remote monitoring, PostgreSQL, teams (out of scope now) |
+| Version | Scope | |
+|---|---|---|
+| v0.1–v0.2 | Planning & architecture | ✅ |
+| v0.3 | Core setup: repo, CI, DB, settings, theming, shell | ✅ |
+| v0.4 | System module + Dashboard (live charts, snapshots, retention) | ✅ |
+| v0.5 | Network scanner + export service | ✅ |
+| v0.6 | Monitoring + disk alerts + alert lifecycle | ✅ |
+| v0.7 | Log analyzer (pluggable parsers, anomalies) | ✅ |
+| v0.8 | Reports (six datasets) | ✅ |
+| v1.0–v1.1 | MVP hardening, monitoring improvements | ✅ |
+| v1.2–v1.3 | Backup manager, scheduler, settings portability | ✅ |
+| v1.4–v1.5 | Hardening, local API, production packaging, full docs | ✅ |
+| v2.x+ | Web dashboard, remote monitoring, PostgreSQL, teams | future |
 
 ## Known Limitations
 
-- Feature modules beyond Settings are not implemented yet (v0.3); in-app
-  placeholder pages state exactly what lands when.
-- The Windows build workflow has not yet executed (it runs once the repo is
-  pushed to GitHub — decision AD-002).
-- Reachability checks use the system `ping` (no admin rights required);
-  MAC discovery is best-effort via the ARP cache and hostname resolution
-  depends on local reverse DNS (decision AD-009). A TCP-connect probe for
-  ICMP-filtered hosts is on the roadmap.
-- Packaged executables are unsigned (zero-cost budget); Windows SmartScreen
-  will warn on first run.
+- Windows build workflow executes once the repository is pushed to GitHub
+  (owner decision AD-002) — spec, installer script, and workflow are ready.
+- Executables are unsigned → SmartScreen warns on first run (zero-cost
+  budget); documented in deployment.md.
+- ICMP reachability uses the system `ping` (no admin rights needed);
+  ICMP-filtered hosts appear offline (TCP probe is a roadmap item); MAC via
+  ARP cache and hostnames via reverse DNS are best-effort (AD-009).
+- Scheduler runs while the desktop app is open (no OS service mode yet).
+- PDF export is future work (CSV/JSON/TXT are implemented).
 
 ## Future Improvements
 
-Arabic (and other) localizations via the Qt Linguist pipeline; PDF reports;
-code signing; PostgreSQL backend; web dashboard and multi-device agents
-(v2.x roadmap).
+Arabic (and other) localizations via the Qt Linguist pipeline; TCP-connect
+probe; hash-based backup verification; code signing; PostgreSQL backend;
+web dashboard and multi-device agents (v2.x roadmap).
 
 ## License
 

@@ -4,4 +4,4 @@ Layered application:
     UI (PySide6) -> Application -> Services -> Domain <- Infrastructure
 """
 
-__version__ = "1.2.0"
+__version__ = "1.5.0"

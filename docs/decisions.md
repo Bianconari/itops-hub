@@ -196,3 +196,40 @@ future addition behind the same interface.
 domain/services/application (infrastructure is checked via import-following);
 UI tests run offscreen (`QT_QPA_PLATFORM=offscreen`) so they execute in CI
 on all OSes without a display server.
+
+---
+
+## AD-017 — Local API: per-session token, loopback-only, opt-in
+
+**Status:** Accepted (v1.5 implementation)
+
+**Decision:** Implemented exactly as AD-010 designed: `secrets.token_urlsafe(32)`
+generated at container build, `X-API-Token` required everywhere except
+`/api/health` (constant-time compare), confirmation semantics on destructive
+operations, no CORS. Runs embedded (daemon thread, opt-in via Settings) or
+standalone (`python -m app.api`). Verified by a dedicated API test suite and
+a live boot smoke test.
+
+## AD-018 — Backup verification: manifest + size/count comparison
+
+**Status:** Accepted (v1.5)
+
+**Context:** Spec §1.3-G requires verification; full SHA-256 hashing doubles
+backup time on large data sets.
+
+**Decision:** Every backup writes `manifest.json` (per-file sizes); the
+verification pass re-stats each file against the manifest and marks the job
+`verified`. Byte-level hashing remains an opt-in future enhancement behind
+the same interface. Cancellation removes only the partial directory the run
+created; originals and previous backups are never touched.
+
+## AD-019 — Session-per-operation repositories
+
+**Status:** Accepted (v0.6, retained at v1.5)
+
+**Context:** Services run on worker threads (monitor rounds, scans, API) —
+a shared SQLAlchemy session is not thread-safe.
+
+**Decision:** Every repository method opens its own short session over the
+WAL-enabled engine. Concurrency is modest (single user) and SQLite WAL
+handles it; this also future-proofs the PostgreSQL path.

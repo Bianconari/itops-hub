@@ -143,6 +143,16 @@ class SettingsView(QWidget):
         export_wrapper.setLayout(export_row)
         form.addRow(QLabel("Default export directory"), export_wrapper)
 
+        # --- Local API (v1.5) ---
+        self.chk_api = QCheckBox("Enable local FastAPI service (loopback only)")
+        self.chk_api.setObjectName("chk_api")
+        form.addRow(QLabel("Local API"), self.chk_api)
+
+        self.spin_api_port = QSpinBox()
+        self.spin_api_port.setObjectName("spin_api_port")
+        self.spin_api_port.setRange(1024, 65535)
+        form.addRow(QLabel("API port"), self.spin_api_port)
+
         # --- Notifications ---
         self.chk_inapp = QCheckBox("In-app notifications")
         self.chk_inapp.setObjectName("chk_inapp")
@@ -204,6 +214,8 @@ class SettingsView(QWidget):
             self.edit_export_dir.setText(
                 str(settings.default_export_dir) if settings.default_export_dir else ""
             )
+            self.chk_api.setChecked(settings.api.enabled)
+            self.spin_api_port.setValue(settings.api.port)
             self.chk_inapp.setChecked(settings.notifications.in_app)
             self.chk_desktop.setChecked(settings.notifications.desktop)
             self._set_status("", "")
@@ -234,6 +246,10 @@ class SettingsView(QWidget):
             "notifications": {
                 "in_app": self.chk_inapp.isChecked(),
                 "desktop": self.chk_desktop.isChecked(),
+            },
+            "api": {
+                "enabled": self.chk_api.isChecked(),
+                "port": self.spin_api_port.value(),
             },
         }
         self.btn_save.setEnabled(False)

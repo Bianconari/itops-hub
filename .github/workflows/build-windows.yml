@@ -20,12 +20,25 @@ jobs:
       - run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Build with PyInstaller
         run: pyinstaller itopshub.spec --noconfirm
-      - name: Run packaged selftest
-        run: ./dist/ITOpsHub/ITOpsHub.exe --selftest
+      - name: Run packaged selftest (exit code)
+        run: |
+          ./dist/ITOpsHub/ITOpsHub.exe --selftest
+          if ($LASTEXITCODE -ne 0) { throw "selftest failed: $LASTEXITCODE" }
         shell: pwsh
-      - name: Upload artifact
+      - name: Build installer (Inno Setup)
+        run: |
+          choco install -y innosetup --no-progress
+          iscc scripts/installer.iss
+        shell: pwsh
+      - name: Upload application artifact
         uses: actions/upload-artifact@v4
         with:
           name: ITOpsHub-windows-x64
           path: dist/ITOpsHub/
+          if-no-files-found: error
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ITOpsHub-Setup
+          path: dist/ITOpsHub-Setup.exe
           if-no-files-found: error

@@ -1,10 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec for ITOps Hub (onedir build).
+# PyInstaller spec for ITOps Hub (onedir, windowed) — v1.5 production build.
 #
-# Evolves with milestones: charts (PyQtGraph) land in v0.4; the local FastAPI
-# service in v1.5. The console window stays enabled for early builds so
-# selftest output is visible; it is disabled when packaging hardens in v1.0
-# (log files always capture output regardless).
+# - onedir: faster startup, AV-friendlier than onefile
+# - windowed: no console window; `--selftest` still reports via exit code
+#   (logs always go to %LOCALAPPDATA%\ITOpsHub\logs regardless)
+# - uvicorn hidden imports are required for the embedded local API
 
 import os
 
@@ -15,13 +15,20 @@ a = Analysis(
     pathex=[os.path.abspath(".")],
     binaries=[],
     datas=[("resources", "resources")],
-    hiddenimports=[],
+    hiddenimports=[
+        "uvicorn.logging",
+        "uvicorn.loops",
+        "uvicorn.loops.auto",
+        "uvicorn.protocols",
+        "uvicorn.protocols.http.auto",
+        "uvicorn.protocols.websockets.auto",
+        "uvicorn.lifespan",
+        "uvicorn.lifespan.on",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
 )
@@ -38,8 +45,11 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    console=True,  # switch to False at v1.0 packaging hardening
+    console=False,
     disable_windowed_traceback=False,
+    icon="resources" + os.sep + "icons" + os.sep + "app.ico" if os.path.exists(
+        "resources" + os.sep + "icons" + os.sep + "app.ico"
+    ) else None,
 )
 
 coll = COLLECT(

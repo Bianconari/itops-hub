@@ -10,6 +10,7 @@ later the standalone API process). UI and API are attached on top of it.
 from __future__ import annotations
 
 import logging
+import secrets
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
@@ -58,6 +59,8 @@ class AppContainer:
 
     paths: AppPaths
     bus: EventBus = field(default_factory=EventBus)
+    #: Per-session local API token (AD-010); regenerated every build().
+    api_token: str = field(default_factory=lambda: secrets.token_urlsafe(32))
     settings_service: SettingsService | None = None
     activity_service: ActivityLogService | None = None
     alert_service: AlertService | None = None
