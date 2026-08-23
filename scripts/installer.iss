@@ -5,12 +5,12 @@
 ; The GitHub Actions build-windows workflow automates both steps.
 
 #define MyAppName "ITOps Hub"
-#define MyAppVersion "1.5.0"
+#define MyAppVersion "1.5.1"
 #define MyAppPublisher "ITOps Hub Contributors"
 #define MyAppExeName "ITOpsHub.exe"
 
 [Setup]
-AppId={{7C1B6E9A-52C4-4B7D-9A34-ITOPSHUB15}
+AppId={{e0d60cf7-f70e-4ed0-895b-cba55f904a62}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -19,6 +19,8 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir=..\dist
 OutputBaseFilename=ITOpsHub-Setup
+SetupIconFile=..\resources\icons\app.ico
+UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
