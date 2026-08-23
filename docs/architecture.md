@@ -86,7 +86,8 @@ SettingsView (form) ──update(dict)──▶ SettingsService
 | Shell + navigation + functional Settings page | v0.3 ✅ | `app/ui/main_window/`, `app/ui/views/` |
 | System info + Dashboard (KPIs, live chart, snapshots, retention) | v0.4 ✅ | `app/services/system_service.py`, `app/ui/views/dashboard_view.py` |
 | System inventory page | v0.4 ✅ | `app/ui/views/system_view.py` |
-| Network scanner | v0.5 (M4) | planned |
+| Network scanner (service + UI, authorization guard, cancel) | v0.5 ✅ | `app/services/network_scan_service.py`, `app/ui/views/network_view.py` |
+| Export service (CSV/JSON/TXT) | v0.5 ✅ | `app/services/export_service.py` |
 | Monitoring / Disk / Alerts | v0.6 (M5) | planned |
 | Log analyzer | v0.7 (M6) | planned |
 | Reports | v0.8 (M7) | planned |

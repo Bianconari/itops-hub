@@ -8,10 +8,11 @@ operations, reporting, and automation in a single modern desktop application.
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
 
-> **Current state: v0.4 (M3 — System Module & Dashboard).** The
-> architecture, database, settings, audit logging, theming, application
-> shell, **live dashboard** (KPI cards, real-time CPU/RAM/disk chart, health
-> summary) and **System page** are real and tested (145 automated tests).
+> **Current state: v0.5 (M4 — Network Scanner).** Architecture,
+> database, settings, audit logging, theming, live dashboard, System page,
+> and the **Network scanner** (concurrent authorized CIDR scans with
+> progress, cancellation, hostname + best-effort MAC lookup, and CSV/JSON/TXT
+> export) are real and tested (192 automated tests).
 > Feature modules land milestone by milestone — see
 > [Project Roadmap](#project-roadmap). Pages not yet implemented are labeled
 > in-app with the exact version where they arrive; there are no mock
@@ -39,7 +40,7 @@ local history and an auditable activity trail.
 |---|---|---|
 | Dashboard | KPI cards, live charts, health summary, recent alerts/activity | **v0.4 ✅** |
 | System | Hostname, OS, CPU, RAM, storage, adapters, IPs, uptime | **v0.4 ✅** |
-| Network | Authorized CIDR scanning with progress, cancel, export | v0.5 (M4) |
+| Network | Authorized CIDR scanning with progress, cancel, export | **v0.5 ✅** |
 | Monitoring | Ping monitors with states, latency history, alerts | v0.6 (M5) |
 | Disk | Drive usage with configurable warning/critical thresholds | v0.6 (M5) |
 | Logs | Pluggable log parsing, level counts, anomalies | v0.7 (M6) |
@@ -55,11 +56,11 @@ local history and an auditable activity trail.
 |---|---|
 | ![](docs/screenshots/m4-dashboard-light.png) | ![](docs/screenshots/m4-dashboard-dark.png) |
 
-| System inventory (dark) | Settings (dark) |
+| System inventory (dark) | Network scanner (light) |
 |---|---|
-| ![](docs/screenshots/m4-system-dark.png) | ![](docs/screenshots/m2-shell-dark-settings.png) |
+| ![](docs/screenshots/m4-system-dark.png) | ![](docs/screenshots/m5-network-light.png) |
 
-Real offscreen captures of the running application (v0.4) with live
+Real offscreen captures of the running application (v0.5) with live
 psutil data — no mock data.
 
 ## Architecture
@@ -186,6 +187,7 @@ packaging milestones. Details: `docs/deployment.md` (added at v1.0).
 | v0.1–v0.2 | Planning & architecture ✅ |
 | v0.3 | Core setup: repo, CI, DB, settings, theming, shell ✅ |
 | v0.4 | System module + Dashboard (live charts, snapshots, retention) ✅ |
+| v0.5 | Network scanner + first export service | ✅ |
 | v0.5 | Network scanner |
 | v0.6 | Monitoring + Disk + Alerts |
 | v0.7 | Log analyzer |
@@ -202,8 +204,9 @@ packaging milestones. Details: `docs/deployment.md` (added at v1.0).
 - The Windows build workflow has not yet executed (it runs once the repo is
   pushed to GitHub — decision AD-002).
 - Reachability checks use the system `ping` (no admin rights required);
-  ICMP-filtered hosts need the TCP probe (v0.5) and MAC discovery is
-  best-effort via the ARP cache (decision AD-009).
+  MAC discovery is best-effort via the ARP cache and hostname resolution
+  depends on local reverse DNS (decision AD-009). A TCP-connect probe for
+  ICMP-filtered hosts is on the roadmap.
 - Packaged executables are unsigned (zero-cost budget); Windows SmartScreen
   will warn on first run.
 

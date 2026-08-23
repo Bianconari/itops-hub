@@ -6,9 +6,39 @@ versioning follows [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
-### Planned next (v0.5 / M4)
-- Network scan service (CIDR validation, concurrent checks, cancel, ARP/hostname)
-- Network scanner page with results table and export
+### Planned next (v0.6 / M5)
+- Ping monitor: device CRUD, scheduled checks, online/offline/warning states, history
+- Disk monitor alerts + alerts lifecycle (raise, acknowledge)
+
+## [0.5.0] — 2026-08-23 — Network Scanner (M4)
+
+### Added
+- Network domain model (`HostResult`, `ScanResult`, `PingResult`) and
+  Protocols (`Pinger`, `HostnameResolver`, `ArpSource`)
+- `NetworkScanService`: validated CIDR input, authorization guard (public
+  ranges require an explicit override when `scan_private_only` is on), host
+  cap, bounded ThreadPoolExecutor fan-out, cooperative cancellation with
+  partial results, progress callback, hostname resolution for reachable
+  hosts, best-effort MAC enrichment from the ARP cache, activity logging and
+  `scan.completed` events
+- Production adapters: `SystemPinger` (OS `ping` via argument-list
+  `subprocess.run`, `shell=False`, locale-independent exit-code + TTL
+  reachability check, best-effort latency parsing — AD-009),
+  `SocketHostnameResolver`, `ArpTable` (Windows `arp -a` / Linux
+  `/proc/net/arp` parsing with MAC normalization)
+- `ExportService`: reusable CSV/JSON/TXT writers with metadata headers,
+  timestamped filenames, never-overwrite behavior — used by the scanner now
+  and by reports in v0.6–v0.8
+- Network page: CIDR input, authorization checkbox, scan/cancel with
+  progress, sortable results table, reachable-only filter, per-format export
+  buttons, error surfacing (authorization/limit messages), stale-result
+  protection on instant cancel
+- Settings: `scan_max_hosts` (default 1024) + UI control; scan concurrency
+  control retained
+- `ScanWorker` QThread; `docs/data-model.md` added
+- 47 new tests (192 total); real
+  end-to-end scan verified against loopback (6/6 hosts, resolution, ARP,
+  export, audit trail)
 
 ## [0.4.0] — 2026-08-23 — System Module & Dashboard (M3)
 

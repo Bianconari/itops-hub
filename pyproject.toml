@@ -1,6 +1,6 @@
 [project]
 name = "itops-hub"
-version = "0.4.0"
+version = "0.5.0"
 description = "ITOps Hub - modular desktop IT operations platform: diagnostics, network discovery, monitoring, log analysis, backups, reporting, and automation."
 readme = "README.md"
 requires-python = ">=3.11"
