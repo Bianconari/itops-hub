@@ -1,0 +1,31 @@
+name: Build Windows
+
+# Builds the packaged Windows application and runs its selftest.
+# NOTE: first execution happens after the repository is pushed to GitHub
+# (owner decision Q2: CI-built Windows artifacts).
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    name: PyInstaller (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Build with PyInstaller
+        run: pyinstaller itopshub.spec --noconfirm
+      - name: Run packaged selftest
+        run: ./dist/ITOpsHub/ITOpsHub.exe --selftest
+        shell: pwsh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ITOpsHub-windows-x64
+          path: dist/ITOpsHub/
+          if-no-files-found: error
