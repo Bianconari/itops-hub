@@ -112,7 +112,10 @@ class SyslogParser:
     """Classic syslog: ``Aug 23 12:00:01 host proc[pid]: message``.
 
     Syslog lines carry no explicit level; severity is inferred from message
-    keywords (documented limitation of the format, not of the parser).
+    keywords, and no year — the current year is assumed when parsing
+    (standard syslog behavior; lines written in December read in January
+    will show the wrong year — an inherent format limitation, documented
+    here rather than papered over with an ambiguous default).
     """
 
     name = "syslog"
@@ -130,7 +133,8 @@ class SyslogParser:
         if match is None:
             return None
         try:
-            ts = datetime.strptime(match.group("ts").replace("  ", " "), _SYSLOG_TS)
+            stamped = f"{datetime.now().year} {match.group('ts').replace('  ', ' ')}"
+            ts = datetime.strptime(stamped, "%Y %b %d %H:%M:%S")
         except ValueError:
             ts = None
         message = match.group("msg").strip()

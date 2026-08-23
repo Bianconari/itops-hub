@@ -37,12 +37,16 @@ class TestPythonLoggingParser:
 
 class TestSyslogParser:
     def test_standard_line(self):
+        from datetime import datetime
+
         entry = SyslogParser().parse_line(
             "Aug 23 08:00:09 gw01 sshd[820]: Failed password for invalid user admin"
         )
         assert entry is not None
         assert entry.level is LogLevel.ERROR  # keyword inferred
+        # syslog has no year: the parser supplies the current one explicitly
         assert entry.timestamp is not None
+        assert entry.timestamp.year == datetime.now().year
 
     def test_info_when_no_keyword(self):
         entry = SyslogParser().parse_line("Aug 23 09:00:00 gw01 dhclient[441]: DHCPREQUEST on eth0")
