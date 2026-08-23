@@ -14,7 +14,12 @@ a = Analysis(
     ["run.py"],
     pathex=[os.path.abspath(".")],
     binaries=[],
-    datas=[("resources", "resources")],
+    datas=[
+        ("resources", "resources"),
+        # Alembic scripts are file-based (env.py/mako/versions) and are not
+        # collected automatically; ship them so migrations run in the exe.
+        ("app/infrastructure/db/alembic", "app/infrastructure/db/alembic"),
+    ],
     hiddenimports=[
         "uvicorn.logging",
         "uvicorn.loops",

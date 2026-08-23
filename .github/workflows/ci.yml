@@ -57,4 +57,4 @@ jobs:
       - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: python -m app.main --version
       - run: python -m app.main --selftest
-      - run: pytest -q
+      - run: python -m pytest -q
