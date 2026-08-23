@@ -18,6 +18,7 @@ from app.application.container import AppContainer
 from app.ui.main_window.sidebar import Sidebar
 from app.ui.theme.theme_service import ThemeService
 from app.ui.views.dashboard_view import DashboardView
+from app.ui.views.network_view import NetworkView
 from app.ui.views.placeholder_page import PlaceholderPage
 from app.ui.views.settings_view import SettingsView
 from app.ui.views.system_view import SystemView
@@ -26,7 +27,7 @@ from app.ui.views.system_view import SystemView
 _PAGES: list[tuple[str, str, str | None]] = [
     ("dashboard", "Dashboard", None),  # implemented (v0.4)
     ("system", "System", None),  # implemented (v0.4)
-    ("network", "Network", "v0.5 (M4)"),
+    ("network", "Network", None),  # implemented (v0.5)
     ("monitoring", "Monitoring", "v0.6 (M5)"),
     ("logs", "Logs", "v0.7 (M6)"),
     ("backups", "Backups", "v1.2 (M9)"),
@@ -36,11 +37,6 @@ _PAGES: list[tuple[str, str, str | None]] = [
 ]
 
 _PAGE_DESCRIPTIONS: dict[str, str] = {
-    "network": (
-        "Authorized-network CIDR scanning with validation, concurrent checks, "
-        "progress and cancellation, hostname resolution, best-effort MAC lookup, "
-        "and result export. An authorization notice guards every scan."
-    ),
     "monitoring": (
         "Add devices (name / host / interval / timeout) and track online, "
         "offline, and warning states with response times, failure counts, "
@@ -100,6 +96,8 @@ class MainWindow(QMainWindow):
                 page = DashboardView(container, theme_service)
             elif page_id == "system":
                 page = SystemView(container, theme_service)
+            elif page_id == "network":
+                page = NetworkView(container)
             else:
                 page = SettingsView(container)
             self._pages[page_id] = page
@@ -115,9 +113,13 @@ class MainWindow(QMainWindow):
         self.statusBar().setSizeGripEnabled(False)
 
     def closeEvent(self, event) -> None:
-        dashboard = self._pages.get("dashboard")
-        if isinstance(dashboard, DashboardView):
-            dashboard.shutdown()
+        for page_id, shutdown_owner in (
+            ("dashboard", DashboardView),
+            ("network", NetworkView),
+        ):
+            page = self._pages.get(page_id)
+            if isinstance(page, shutdown_owner):
+                page.shutdown()
         super().closeEvent(event)
 
     def _navigate(self, page_id: str) -> None:

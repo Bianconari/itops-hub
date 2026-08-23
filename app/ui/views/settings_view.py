@@ -120,6 +120,11 @@ class SettingsView(QWidget):
         self.spin_workers.setRange(1, 512)
         form.addRow(QLabel("Scan concurrency (workers)"), self.spin_workers)
 
+        self.spin_max_hosts = QSpinBox()
+        self.spin_max_hosts.setObjectName("spin_max_hosts")
+        self.spin_max_hosts.setRange(16, 65536)
+        form.addRow(QLabel("Scan size limit (addresses)"), self.spin_max_hosts)
+
         self.chk_private_only = QCheckBox("Require private ranges unless explicitly overridden")
         self.chk_private_only.setObjectName("chk_private_only")
         form.addRow(QLabel("Authorized-scan guard"), self.chk_private_only)
@@ -181,6 +186,7 @@ class SettingsView(QWidget):
             self.spin_disk_warning.setValue(int(settings.disk.warning_percent))
             self.spin_disk_critical.setValue(int(settings.disk.critical_percent))
             self.spin_workers.setValue(settings.scan_max_workers)
+            self.spin_max_hosts.setValue(settings.scan_max_hosts)
             self.chk_private_only.setChecked(settings.scan_private_only)
             self.edit_export_dir.setText(
                 str(settings.default_export_dir) if settings.default_export_dir else ""
@@ -209,6 +215,7 @@ class SettingsView(QWidget):
                 "critical_percent": float(self.spin_disk_critical.value()),
             },
             "scan_max_workers": self.spin_workers.value(),
+            "scan_max_hosts": self.spin_max_hosts.value(),
             "scan_private_only": self.chk_private_only.isChecked(),
             "default_export_dir": export_text or None,
             "notifications": {
