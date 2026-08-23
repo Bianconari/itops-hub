@@ -25,10 +25,8 @@ class Topics:
     SETTINGS_CHANGED = "settings.changed"
     APP_STARTED = "app.started"
     APP_STOPPED = "app.stopped"
+    SCAN_COMPLETED = "scan.completed"
     # Future topics (land with their milestones):
-    #   snapshot.recorded    (v0.4)  system snapshot persisted
-    #   scan.progress        (v0.5)  network scan progress
-    #   scan.completed       (v0.5)
     #   monitor.result       (v0.6)  ping monitor result persisted
     #   alert.raised         (v0.6)
 

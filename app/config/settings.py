@@ -92,6 +92,8 @@ class AppSettings(BaseModel):
 
     #: Network scanner behavior.
     scan_max_workers: int = Field(default=64, ge=1, le=512)
+    #: Maximum addresses per scan (keeps scans bounded; adjustable in Settings).
+    scan_max_hosts: int = Field(default=1024, ge=16, le=65536)
     #: When True, scanning public IP ranges requires an explicit override in
     #: the UI (authorization guard; scanning is for networks you administer).
     scan_private_only: bool = True
