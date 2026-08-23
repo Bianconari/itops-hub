@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self._container = container
         self._theme = theme_service
-        self.setWindowTitle("ITOps Hub")
+        self.setWindowTitle(f"ITOps Hub — v{__version__}")
         self.resize(1180, 760)
 
         central = QWidget()

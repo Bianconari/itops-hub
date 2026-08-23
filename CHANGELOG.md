@@ -9,6 +9,40 @@ versioning follows [SemVer](https://semver.org/).
 ### Future (v2.x roadmap)
 - Web dashboard, remote monitoring agents, PostgreSQL, authentication
 
+## [1.5.1] — 2026-08-23 — Release Hardening
+
+### Fixed
+- **Inno Setup AppId** was not a valid GUID (text suffix) — replaced with a
+  generated GUID
+- Architecture documentation synchronized with the implemented system (the
+  module map previously listed monitoring/logs/reports/backup/API as
+  "planned"); README/data-model/user-guide/testing/api docs aligned
+- Syslog parser: year-less `strptime` triggered a `DeprecationWarning`
+  (Python 3.15 changes behavior) — the parser now supplies the current year
+  explicitly (inherent syslog limitation documented); test updated
+- Test suite runs warning-clean (single third-party fastapi/starlette
+  import notice filtered narrowly by message, reason documented)
+- Embedded API mode (Settings toggle) now writes the `api-token` file like
+  standalone mode — token always discoverable
+- Backup verification failure no longer reports SUCCESS silently — failed
+  verification marks the job FAILED with an explicit error
+
+### Added
+- Backup verification modes: `none` / `size` (default) / `sha256`
+  (per-file hashing in the manifest); UI selector, API `verify_mode` field
+  (legacy `verify` boolean still accepted), scheduler profile override;
+  new tests cover hashing, tamper detection, and mode validation
+- Windows branding: real multi-size `app.ico` (exe + installer +
+  uninstaller), executable version metadata, versioned window title;
+  icon regeneration script (`scripts/make_icon.py`) keeps it reproducible
+- CI: installer smoke test on `windows-latest` — silent install, installed
+  exe selftest, silent uninstall, removal verification
+- `docs/release-audit-v1.5.md` (this release's audit record)
+- Headless test command documented (`pytest --ignore=tests/ui`)
+
+### Changed
+- Version bumped to 1.5.1 across app, pyproject, exe metadata, installer
+
 ## [1.5.0] — 2026-08-23 — Stable Local API Release (M10)
 
 ### Added
