@@ -6,16 +6,19 @@ services via their constructors. Status bar shows version and data location.
 
 from __future__ import annotations
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QMainWindow,
     QStackedWidget,
+    QSystemTrayIcon,
     QWidget,
 )
 
 from app import __version__
 from app.application.container import AppContainer
 from app.ui.main_window.sidebar import Sidebar
+from app.ui.resources import resource_path
 from app.ui.theme.theme_service import ThemeService
 from app.ui.views.alerts_view import AlertsView
 from app.ui.views.backup_view import BackupView
@@ -27,6 +30,8 @@ from app.ui.views.placeholder_page import PlaceholderPage
 from app.ui.views.reports_view import ReportsView
 from app.ui.views.settings_view import SettingsView
 from app.ui.views.system_view import SystemView
+from app.ui.widgets.toast import ToastManager
+from app.ui.workers.event_bridge import EventBusBridge
 
 #: (page_id, nav title, planned version or None when implemented)
 _PAGES: list[tuple[str, str, str | None]] = [
@@ -109,11 +114,57 @@ class MainWindow(QMainWindow):
 
         self._navigate("dashboard")
 
+        # Notifications (v1.6): in-app toasts + system-tray messages.
+        self._toasts = ToastManager(self, theme_service)
+        self._toasts.activated.connect(lambda: self._navigate("alerts"))
+        self._event_bridge = EventBusBridge(container.bus)
+        self._event_bridge.alert_raised.connect(self._on_alert_raised)
+        self._tray = self._build_tray()
+
         db_note = f"v{__version__}  •  data: {container.paths.base}"
         self.statusBar().showMessage(db_note)
         self.statusBar().setSizeGripEnabled(False)
 
+    def _build_tray(self) -> QSystemTrayIcon | None:
+        """System tray icon with desktop notifications (if the OS provides one)."""
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            return None
+        tray = QSystemTrayIcon(QIcon(str(resource_path("icons", "app.ico"))), self)
+        tray.setToolTip(f"ITOps Hub v{__version__}")
+        tray.activated.connect(
+            lambda reason: (
+                self.showNormal()
+                if reason == QSystemTrayIcon.ActivationReason.DoubleClick
+                else None
+            )
+        )
+        tray.messageClicked.connect(lambda: self._navigate("alerts"))
+        tray.show()
+        return tray
+
+    def _on_alert_raised(self, alert: object) -> None:
+        """Show toast + tray message for a raised alert (settings-gated)."""
+        settings = self._container.settings_service.get()
+        severity = alert.severity.value  # type: ignore[attr-defined]
+        title = f"Alert - {alert.type}"  # type: ignore[attr-defined]
+        message = alert.message  # type: ignore[attr-defined]
+        if settings.notifications.in_app:
+            self._toasts.show_toast(severity, title, message)
+        if (
+            settings.notifications.desktop
+            and self._tray is not None
+            and severity in ("warning", "critical")
+        ):
+            icon = {
+                "warning": QSystemTrayIcon.MessageIcon.Warning,
+                "critical": QSystemTrayIcon.MessageIcon.Critical,
+            }[severity]
+            self._tray.showMessage(title, message, icon, 8000)
+
     def closeEvent(self, event) -> None:
+        self._event_bridge.detach()
+        if self._tray is not None:
+            self._tray.hide()
         for page_id, shutdown_owner in (
             ("dashboard", DashboardView),
             ("network", NetworkView),

@@ -128,7 +128,12 @@ class NetworkView(QWidget):
         self.chk_reachable_only.toggled.connect(self._apply_filter)
         header.addWidget(self.chk_reachable_only)
 
-        for fmt, name in (("csv", "Export CSV"), ("json", "Export JSON"), ("txt", "Export TXT")):
+        for fmt, name in (
+            ("csv", "Export CSV"),
+            ("json", "Export JSON"),
+            ("txt", "Export TXT"),
+            ("pdf", "Export PDF"),
+        ):
             button = QPushButton(name)
             button.setObjectName(f"btn_export_{fmt}")
             button.setEnabled(False)
@@ -214,7 +219,7 @@ class NetworkView(QWidget):
             f"{scan_result.total} addresses · {scan_result.reachable_count} reachable · "
             f"{scan_result.duration_seconds:.1f}s · {state}"
         )
-        for fmt in ("csv", "json", "txt"):
+        for fmt in ("csv", "json", "txt", "pdf"):
             getattr(self, f"btn_export_{fmt}").setEnabled(bool(scan_result.results))
 
     def _on_scan_cancelled(self) -> None:
@@ -285,7 +290,7 @@ class NetworkView(QWidget):
         if worker is not None and self._export_worker is worker:
             self._export_worker = None
         if self._last_result is not None and self._last_result.results:
-            for name in ("csv", "json", "txt"):
+            for name in ("csv", "json", "txt", "pdf"):
                 getattr(self, f"btn_export_{name}").setEnabled(True)
 
     def _on_export_done(self, path: object) -> None:

@@ -52,10 +52,13 @@ device on its own interval. Select a device and a time range to view its
 latency history and availability. The Disk volumes card shows usage against
 your thresholds; breaches raise alerts automatically.
 
-## Alerts
+## Alerts & notifications
 
 Threshold breaches (disk), unreachable devices, and recoveries land in the
-Alerts page with severity colors. Acknowledge alerts you have handled;
+Alerts page with severity colors. Raised alerts also pop up as **toast
+cards** (bottom-right, click to open Alerts) and — for warning/critical —
+**system-tray messages**; both channels can be toggled in Settings →
+Notifications. Acknowledge alerts you have handled;
 filters show unacknowledged ones only. Alerts are deduplicated — a flapping
 condition raises one open alert until resolved.
 
@@ -80,8 +83,8 @@ scheduler runs them automatically while the app is open.
 ## Reports
 
 Build reports from live data — monitoring history, per-device latency,
-alerts, activity, disk usage, system snapshots — in CSV/JSON/TXT with
-metadata headers. Previously generated files are listed for quick access.
+alerts, activity, disk usage, system snapshots — in **CSV/JSON/TXT/PDF**
+with metadata headers (PDF: branded, paginated tables). Previously generated files are listed for quick access.
 
 ## Local API
 

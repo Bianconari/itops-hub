@@ -97,6 +97,13 @@ QFrame#kpiCard {{
 }}
 QFrame#kpiCard[accent_warning="true"] {{ border-left: 4px solid {t.warning}; }}
 QFrame#kpiCard[accent_critical="true"] {{ border-left: 4px solid {t.danger}; }}
+QFrame#toast {{
+    background: {t.surface_bg}; border: 1px solid {t.border}; border-radius: 8px;
+}}
+QFrame#toast[severity="info"] {{ border-left: 4px solid {t.primary}; }}
+QFrame#toast[severity="warning"] {{ border-left: 4px solid {t.warning}; }}
+QFrame#toast[severity="critical"] {{ border-left: 4px solid {t.danger}; }}
+QLabel#toastTitle {{ font-weight: 600; }}
 QLabel#kpiValue {{ font-size: 26px; font-weight: 700; background: transparent; }}
 QLabel#kpiValue[accent_ok="true"] {{ color: {t.text_primary}; }}
 QLabel#kpiValue[accent_warning="true"] {{ color: {t.warning}; }}

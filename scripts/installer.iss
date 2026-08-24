@@ -5,7 +5,7 @@
 ; The GitHub Actions build-windows workflow automates both steps.
 
 #define MyAppName "ITOps Hub"
-#define MyAppVersion "1.5.1"
+#define MyAppVersion "1.6.0"
 #define MyAppPublisher "ITOps Hub Contributors"
 #define MyAppExeName "ITOpsHub.exe"
 

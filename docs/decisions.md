@@ -233,3 +233,29 @@ a shared SQLAlchemy session is not thread-safe.
 **Decision:** Every repository method opens its own short session over the
 WAL-enabled engine. Concurrency is modest (single user) and SQLite WAL
 handles it; this also future-proofs the PostgreSQL path.
+
+
+---
+
+## AD-020 — PDF export via reportlab (v1.6)
+
+**Status:** Accepted
+
+**Context:** Reports needed PDF; the alternative (QTextDocument→QPrinter)
+would drag the Qt GUI stack into the headless API process.
+
+**Decision:** `reportlab` (BSD, pure Python) inside the shared
+`ExportService` writer — one `_write_pdf` path serves every report, scan,
+and log-analysis export, in the app and the API alike. Branded, paginated
+tables (wrapped cells, repeating header row); no GUI dependency.
+
+## AD-021 — Toast notifications via bus→signal bridge (v1.6)
+
+**Status:** Accepted
+
+**Decision:** Domain events are published on the in-process `EventBus` from
+worker threads; a small `EventBusBridge` (QObject) re-emits them as Qt
+signals (queued to the main thread). `ToastManager` stacks in-app cards
+(bottom-right, severity-colored, auto-dismiss); `QSystemTrayIcon` delivers
+desktop messages for warning/critical. Both channels are settings-gated
+(notifications.in_app / desktop).

@@ -223,6 +223,19 @@ class TestAlertsAndReports:
         )
         assert confirmed.status_code == 200
 
+    def test_reports_generate_pdf(self, client, container, tmp_path):
+        headers = auth_headers(container)
+        container.settings_service.update({"default_export_dir": str(tmp_path / "exports")})
+        created = client.post(
+            "/api/reports",
+            json={"report_key": "activity", "format": "pdf", "hours": 24},
+            headers=headers,
+        )
+        assert created.status_code == 201
+        path = created.json()["path"]
+        with open(path, "rb") as handle:
+            assert handle.read(5) == b"%PDF-"
+
     def test_reports_generate_and_list(self, client, container, tmp_path):
         headers = auth_headers(container)
         container.settings_service.update({"default_export_dir": str(tmp_path / "exports")})

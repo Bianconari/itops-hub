@@ -45,8 +45,9 @@ trail.
 | Disk | Per-volume usage, configurable warn/crit thresholds, alert lifecycle | ✅ |
 | Logs | Auto-detected parsers (Python logging / syslog / generic), level counts, top errors, anomaly flags | ✅ |
 | Backups | Timestamped copies, manifest verification, cancel-safe, schedulable profiles | ✅ |
-| Reports | Six datasets → CSV/JSON/TXT with metadata; never overwrites | ✅ |
+| Reports | Six datasets → CSV/JSON/**TXT/PDF** with metadata; never overwrites | ✅ |
 | Alerts | Deduplicated raise/resolve, acknowledge, filters | ✅ |
+| Notifications | In-app toasts + system-tray messages for raised alerts | ✅ |
 | Local API | Loopback FastAPI + OpenAPI, per-session token, same core services | ✅ |
 | Settings | Themes, thresholds, retention, scanner limits, API, backup profiles, import/export | ✅ |
 
@@ -59,6 +60,10 @@ trail.
 | Network scanner | System inventory |
 |---|---|
 | ![](docs/screenshots/m5-network-light.png) | ![](docs/screenshots/m4-system-dark.png) |
+
+| Alert toasts (v1.6) |
+|---|
+| ![](docs/screenshots/v16-toasts.png) |
 
 Real captures of the running application (offscreen renders with live
 psutil data and seeded demo devices at capture time — no fake widgets).
@@ -84,7 +89,7 @@ Decisions (19 ADRs): [docs/decisions.md](docs/decisions.md)
 
 - **Python 3.11+** (3.12/3.13 in CI) · **PySide6** desktop UI
 - **SQLAlchemy 2.0 + Alembic** over **SQLite** (WAL) — PostgreSQL-ready
-- **Pydantic v2** (settings + API schemas) · **PyQtGraph** live charts
+- **Pydantic v2** (settings + API schemas) · **PyQtGraph** live charts · **reportlab** PDF reports
 - **FastAPI + uvicorn** local API · **psutil** metrics
 - System `ping` subprocess (list args, `shell=False`, no admin rights)
 - **pytest / pytest-qt / httpx** tests · **ruff + mypy strict** quality gates
@@ -196,13 +201,13 @@ selftest. Full procedure: [docs/deployment.md](docs/deployment.md).
   ICMP-filtered hosts appear offline (TCP probe is a roadmap item); MAC via
   ARP cache and hostnames via reverse DNS are best-effort (AD-009).
 - Scheduler runs while the desktop app is open (no OS service mode yet).
-- PDF export is future work (CSV/JSON/TXT are implemented).
+- none — PDF export shipped in v1.6.
 
 ## Future Improvements
 
 Arabic (and other) localizations via the Qt Linguist pipeline; TCP-connect
-probe; hash-based backup verification; code signing; PostgreSQL backend;
-web dashboard and multi-device agents (v2.x roadmap).
+probe; code signing; PostgreSQL backend; web dashboard and multi-device
+agents (v2.x roadmap).
 
 ## License
 

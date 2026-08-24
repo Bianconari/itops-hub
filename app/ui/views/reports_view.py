@@ -65,7 +65,7 @@ class ReportsView(QWidget):
         row.addWidget(self.combo_range)
 
         self.combo_format = QComboBox()
-        for fmt in ("csv", "json", "txt"):
+        for fmt in ("csv", "json", "txt", "pdf"):
             self.combo_format.addItem(fmt.upper(), fmt)
         row.addWidget(self.combo_format)
 
@@ -157,7 +157,7 @@ class ReportsView(QWidget):
         if not directory.exists():
             return
         files = sorted(
-            (p for p in directory.iterdir() if p.suffix in {".csv", ".json", ".txt"}),
+            (p for p in directory.iterdir() if p.suffix in {".csv", ".json", ".txt", ".pdf"}),
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )[:25]

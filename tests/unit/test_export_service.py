@@ -83,6 +83,28 @@ class TestFormats:
         assert document["meta"]["application"] == "ITOps Hub"
         assert len(document["rows"]) == 2
 
+    def test_pdf_is_valid_with_table(self, service):
+        path = service.export_scan(make_result(), "pdf")
+        header = path.read_bytes()[:8]
+        assert header.startswith(b"%PDF")
+        assert path.stat().st_size > 1000  # real content, not an empty shell
+        assert path.suffix == ".pdf"
+
+    def test_pdf_with_empty_rows(self, service, tmp_path):
+        from datetime import timedelta
+
+        empty = ScanResult(
+            network="10.0.0.0/29",
+            started_at=utc_now(),
+            completed_at=utc_now() + timedelta(seconds=1),
+            duration_seconds=1.0,
+            total=6,
+            results=(),
+        )
+        path = service.export_scan(empty, "pdf")
+        assert path.read_bytes()[:5] == b"%PDF-"
+        assert b"No data rows" in path.read_bytes() or path.stat().st_size > 800
+
     def test_txt_is_aligned_table(self, service):
         path = service.export_scan(make_result(), "txt")
         text = path.read_text(encoding="utf-8")

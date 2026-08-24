@@ -8,5 +8,6 @@ alembic>=1.13
 pydantic>=2.7
 platformdirs>=4.2
 pyqtgraph>=0.13
+reportlab>=4.0
 fastapi>=0.111
 uvicorn[standard]>=0.30

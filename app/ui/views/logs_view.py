@@ -136,7 +136,7 @@ class LogsView(QWidget):
         self.lbl_levels = QLabel("No analysis yet")
         self.lbl_levels.setProperty("cssClass", "muted")
         header.addWidget(self.lbl_levels)
-        for fmt, name in (("csv", "CSV"), ("json", "JSON"), ("txt", "TXT")):
+        for fmt, name in (("csv", "CSV"), ("json", "JSON"), ("txt", "TXT"), ("pdf", "PDF")):
             button = QPushButton(f"Export {name}")
             button.setObjectName(f"btn_log_export_{fmt}")
             button.setEnabled(False)
@@ -214,7 +214,7 @@ class LogsView(QWidget):
         self.btn_cancel.setEnabled(False)
         self.progress.setVisible(False)
         self._populate(summary)
-        for fmt in ("csv", "json", "txt"):
+        for fmt in ("csv", "json", "txt", "pdf"):
             getattr(self, f"btn_log_export_{fmt}").setEnabled(True)
 
     def _on_failed(self, message: str) -> None:

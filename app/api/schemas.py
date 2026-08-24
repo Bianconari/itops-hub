@@ -33,7 +33,7 @@ class BackupRequest(BaseModel):
 
 class ReportRequest(BaseModel):
     report_key: str
-    format: Literal["csv", "json", "txt"] = "csv"
+    format: Literal["csv", "json", "txt", "pdf"] = "csv"
     hours: float = Field(default=24.0, gt=0, le=24 * 31)
     device_id: int | None = None
 

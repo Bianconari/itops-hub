@@ -9,6 +9,28 @@ versioning follows [SemVer](https://semver.org/).
 ### Future (v2.x roadmap)
 - Web dashboard, remote monitoring agents, PostgreSQL, authentication
 
+## [1.6.0] — 2026-08-24 — Notifications & PDF Reports
+
+### Added
+- **Toast notifications**: raised alerts pop up as severity-colored cards
+  (bottom-right, click → Alerts page, auto-dismiss, max 4 stacked); works
+  for alerts raised from any thread (scheduler/monitor) via a thread-safe
+  EventBus→Qt-signal bridge
+- **System-tray integration**: tray icon (double-click restores), desktop
+  notifications for warning/critical alerts, message click → Alerts
+- Settings toggles `notifications.in_app` / `notifications.desktop` now
+  gate both channels
+- **PDF export** across the whole reporting layer (reports page, network
+  scan, log analysis, API `/api/reports`): branded paginated tables with
+  metadata headers via `reportlab` (AD-020)
+- 9 new tests (toast lifecycle incl. cross-thread raise, click navigation,
+  settings gating, stack cap; PDF validity incl. empty-row edge + API)
+
+### Fixed
+- Toast close now reliably releases its slot (close() hides child widgets;
+  the manager listens to the explicit `closed` signal — found by the new
+  UI tests before release)
+
 ## [1.5.1] — 2026-08-23 — Release Hardening
 
 ### Fixed
